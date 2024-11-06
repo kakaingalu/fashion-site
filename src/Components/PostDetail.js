@@ -1,6 +1,7 @@
 // PostDetails.js
 import React, {useLayoutEffect} from 'react';
 import { useParams, useLocation, Link } from 'react-router-dom';
+import Image from 'react-image-gallery';
 
 // import components
 import NavBar from './NavBar.js';
@@ -57,7 +58,7 @@ const PostDetails = () => {
           <Card className='mt-4'>
             <Card.Header className='fw-bold text-center fs-3'>{post.title}</Card.Header>
             <Card.Body className='p-2'>
-              <img src={post.image} alt={`${post.title}`} className='w-100 rounded' />
+              <Image items={[{ original: post.image }]} alt={`${post.title}`} className='w-100 rounded' />
               <br />
               <Card.Text >{post.date}</Card.Text>
               <Card.Text >{post.author}</Card.Text>

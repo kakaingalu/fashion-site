@@ -15,7 +15,7 @@ import Footer from './Footer.js';
 //Redux import
 import { useFetchRedux } from '../hooks/useFetchRedux.js';
 import { useDispatch } from 'react-redux';
-import { fetchSocialMedia, fetchPosts, fetchSiteIcons } from '../store/fetchSlice.js';
+import { fetchSocialMedia, fetchPosts, fetchSiteIcons } from '../store/reducer.js';
 
 //Bootstrap import
 import {Container} from 'react-bootstrap';
@@ -78,7 +78,7 @@ console.log(siteIcons[0]);
       </div>
     );
   }
-
+ console.log("image",posts.image);
   
     return (
       <>
@@ -112,7 +112,7 @@ console.log(siteIcons[0]);
                         <Post 
                           title={post.title} 
                           content={post.content} 
-                          image={post.image}
+                          image={post.images}
                           index={index}
                         />
                         </Link>

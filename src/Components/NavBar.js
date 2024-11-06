@@ -12,7 +12,7 @@ import { Link } from 'react-router-dom';
 //Redux import
 import { useFetchRedux } from '../hooks/useFetchRedux.js';
 import { useDispatch } from 'react-redux';
-import { fetchSocialMedia, fetchSiteIcons } from '../store/fetchSlice.js';
+import { fetchSocialMedia, fetchSiteIcons } from '../store/reducer.js';
 
 function NavBar() {
   const { socialMedia, siteIcons } = useFetchRedux();

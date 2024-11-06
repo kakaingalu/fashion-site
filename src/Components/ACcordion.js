@@ -10,7 +10,7 @@ import { Link } from 'react-router-dom';
 //Redux import
 import { useFetchRedux } from '../hooks/useFetchRedux.js';
 import { useDispatch } from 'react-redux';
-import { fetchPosts } from '../store/fetchSlice.js';
+import { fetchPosts } from '../store/reducer.js';
 
 
 const PostAccordion = () => {  

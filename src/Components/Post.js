@@ -1,6 +1,7 @@
 // Post.js
 import React from 'react';
 import { Card } from 'react-bootstrap';
+import ImageGallery from 'react-image-gallery';
 
 const Post = ({ title, content, image }) => {
   const truncateText = (text, maxLength = 150) => {
@@ -13,7 +14,8 @@ const Post = ({ title, content, image }) => {
     <Card className="mb-4">
       <Card.Header className='fw-bold text-center'>{title}</Card.Header>
       <Card.Body style={{ maxHeight: '1000px', overflow: 'hidden' }}>
-        <Card.Img variant="top" src={image} alt={`Image for ${title}`} fluid style={{ height: '400px' }}/>
+        {/* <Card.Img variant="top" src={image} alt={`Image for ${title}`} fluid style={{ height: '400px' }}/> */}
+        <ImageGallery items={[{ original: image }]}  />
         <Card.Text >{truncatedContent}</Card.Text>
       </Card.Body>
     </Card>

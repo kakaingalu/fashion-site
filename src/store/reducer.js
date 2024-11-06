@@ -6,25 +6,61 @@ import axios from 'axios';
 
 export const fetchSocialMedia = createAsyncThunk(
   'fetch/socialMedia',
-  async () => {
-    const response = await axios.get('http://localhost:3001/api/social-media-links');
-    return response.data;
+  async (_, thunkAPI) => {
+    try {
+      const instance = axios.create({
+        baseURL: 'http://localhost:3001',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        
+      });
+      const response = await instance.get('/api/social-media-links');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching social media links:', error);
+      throw error;
+    }
   }
 );
 
 export const fetchPosts = createAsyncThunk(
   'fetch/posts',
-  async () => {
-    const response = await axios.get('http://localhost:3001/api/posts');
-    return response.data;
+  async (_, thunkAPI) => {
+    try {
+      const instance = axios.create({
+        baseURL: 'http://localhost:3001',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        
+      });
+      const response = await instance.get('/api/posts');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching posts:', error);
+      throw error;
+    }
   }
 );
 
 export const fetchSiteIcons = createAsyncThunk(
   'fetch/siteIcons',
-  async () => {
-    const response = await axios.get('http://localhost:3001/api/site-icons');
-    return response.data;
+  async (_, thunkAPI) => {
+    try {
+      const instance = axios.create({
+        baseURL: 'http://localhost:3001',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        
+      });
+      const response = await instance.get('/api/site-icons');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching site icons:', error);
+      throw error;
+    }
   }
 );
 
