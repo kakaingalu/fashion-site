@@ -17,7 +17,7 @@ function OffCanvas({posts}) {
 
   return (
     <>
-      <Button className='ms-5 fixed-left left-5 position-fixed' variant="dark" onClick={handleShow}>
+      <Button className='ms-4 fixed-left left-5 position-fixed' variant="dark" onClick={handleShow}>
         Posts
       </Button>
 

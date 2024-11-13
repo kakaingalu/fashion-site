@@ -26,6 +26,9 @@ import {Spinner} from 'react-bootstrap';
 
 
 
+
+
+
 function Home() {
   const location = useLocation();
   const { posts, socialMedia, siteIcons, loading, errors} = useFetchRedux();
@@ -37,8 +40,7 @@ function Home() {
     dispatch(fetchSiteIcons());
   }, [dispatch]);
 
-  
-console.log(siteIcons[0]);
+
   useLayoutEffect(() => {
    // Scroll to top when route changes and returning to home page
    if (location.pathname === '/') {
@@ -78,8 +80,9 @@ console.log(siteIcons[0]);
       </div>
     );
   }
- console.log("image",posts.image);
-  
+
+
+
     return (
       <>
       <div>
@@ -92,27 +95,25 @@ console.log(siteIcons[0]);
         {/*body*/}
         {/* Sidebar */}
          {/* Post List Sidebar */}
-         <Col xs={12} md={3} className="d-none d-md-block">
+         <Col xs={12} md={2} className="d-none d-md-block">
           <OffCanvas posts={posts}/>
           </Col>  
 
           <div className="container-fluid">
             <Row>
               {/* Sidebar */}
-              <Col xs={12} md={3} className="d-none d-md-block">
+              {/* <Col xs={12} md={3} className="d-none d-md-block">
                 <SideBar posts={posts} />
-              </Col>
+              </Col> */}
               {/* Main Content */}
-              <Col xs={12} md={9} className="ps-md-5">
-                <Container fluid>
-                  <Row xs={1} md={2} lg={3}>
+              <Col xs={10} md={12} className="ps-md-5 h-100 custom-no-padding">
+                <Container className='d-flex h-100 p-0 m-0' fluid>
+                  <Row xs={1} md={3} lg={3} className='flex-grow-1 overflow-y-auto m-5 p-0'>
                     {posts.map((post, index) => (
-                      <Col key={index}>
+                      <Col className='' key={index}>
                         <Link className='text-decoration-none text-reset'  preventScrollReset={true} to={`/posts/${index}`}>
                         <Post 
-                          title={post.title} 
-                          content={post.content} 
-                          image={post.images}
+                          post={post}
                           index={index}
                         />
                         </Link>

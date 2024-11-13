@@ -1,59 +1,121 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Button, Form } from 'react-bootstrap';
+import { Container, Row, Col, Button, Form, Alert } from 'react-bootstrap';
+import moment from 'moment';
 
 function UserPage() {
-  const [posts, setPosts] = useState([]);
-  const [socialMediaLinks, setSocialMediaLinks] = useState([]);
-  const [siteIcons, setSiteIcons] = useState([]);
-  const [socialMediaLinksData, setSocialMediaLinksData] = useState([]);
+  // const [posts, setPosts] = useState([]);
+  // const [socialMediaLinks, setSocialMediaLinks] = useState([]);
+  // const [siteIcons, setSiteIcons] = useState([]);
+  // const [socialMediaLinksData, setSocialMediaLinksData] = useState([]);
   const [articleContent, setArticleContent] = useState('');
   const [successMessage, setSuccessMessage] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
   const [articleTitle, setArticleTitle] = useState('');
   const [uploadedImages, setUploadedImages] = useState([]);
+  const [imageName, setImageName] = useState('');
  
 
 
-  useEffect(() => {
-    fetchAllData();
-  }, []);
+  // useEffect(() => {
+  //   fetchAllData();
+  // }, []);
+  
 
-  const fetchAllData = async () => {
-    try {
-      const postsResponse = await fetch('/api/posts');
-      const socialMediaLinksResponse = await fetch('/api/social-media-links');
-      const siteIconsResponse = await fetch('/api/site-icons');
-      const socialMediaLinksDataResponse = await fetch('/api/social-media-links');
+  // const fetchAllData = async () => {
+  //   try {
+  //     const postsResponse = await fetch('/api/posts');
+  //     const socialMediaLinksResponse = await fetch('/api/social-media-links');
+  //     const siteIconsResponse = await fetch('/api/site-icons');
+  //     const socialMediaLinksDataResponse = await fetch('/api/social-media-links');
 
-      const [posts] = await Promise.all([postsResponse.json()]);
-      const [socialMediaLinks] = await Promise.all([socialMediaLinksResponse.json()]);
-      const [siteIcons] = await Promise.all([siteIconsResponse.json()]);
-      const [socialMediaLinksData] = await Promise.all([socialMediaLinksDataResponse.json()]);
+  //     const [posts] = await Promise.all([postsResponse.json()]);
+  //     const [socialMediaLinks] = await Promise.all([socialMediaLinksResponse.json()]);
+  //     const [siteIcons] = await Promise.all([siteIconsResponse.json()]);
+  //     const [socialMediaLinksData] = await Promise.all([socialMediaLinksDataResponse.json()]);
 
-      setPosts(posts);
-      setSocialMediaLinks(socialMediaLinks);
-      setSiteIcons(siteIcons);
-      setSocialMediaLinksData(socialMediaLinksData);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    }
-  };
+  //     setPosts(posts);
+  //     setSocialMediaLinks(socialMediaLinks);
+  //     setSiteIcons(siteIcons);
+  //     setSocialMediaLinksData(socialMediaLinksData);
+  //   } catch (error) {
+  //     console.error('Error fetching data:', error);
+  //     // setErrorMessage('Failed to fetch data. Please try again.');
+  //   }
+  // };
 
   // post article
+  // const postArticle = async () => {
+  //   if (!articleTitle || articleContent.trim() === '' || uploadedImages.length === 0) {
+  //     setErrorMessage('Please enter both title, content, and at least one image.');
+  //     return;
+  //   }
+  //   const formData = new FormData();
+  //   formData.append('title', articleTitle);
+  //   formData.append('content', articleContent);
+  //   formData.append('images', uploadedImages);
+    
+  //   // uploadedImages.forEach((imageLocation, index) => {
+  //   //   formData.append(`images[${index}]`, { path: imageLocation });
+  //   // });
+  //   // console.log("article content:", articleContent, "article tile:", articleTitle, "uploaded images:", uploadedImages)
+  //   console.log("form data", formData);
+
+  //   try {
+  //     const response = await fetch('/api/posts', {
+  //       method: 'POST',
+  //       body: formData,
+  //     });
+
+  //     if (!response.ok) {
+  //       throw new Error('Network response was not ok');
+  //     }
+
+  //     // const newData = await response.json();
+  //     // // setPosts([...posts, newData]);
+  //     setSuccessMessage('Article posted successfully!');
+      
+  //   } catch (error) {
+  //     console.error('Error posting article:', error);
+  //     setErrorMessage('Failed to post article. Please try again.');
+  //   }
+
+  //   setArticleTitle('');
+  //   setArticleContent('');
+  //   setUploadedImages([]);
+    
+  // };
+
+
   const postArticle = async () => {
-    if (!articleTitle || articleContent.trim() === '' || uploadedImages.length === 0) {
-      setErrorMessage('Please enter both title and content.');
+    if (!articleTitle || articleContent.trim() === '' || !imageName) {
+      setErrorMessage('Please enter both title, content, and at least one image.');
       return;
     }
-    const formData = new FormData();
-    formData.append('title', articleTitle);
-    formData.append('content', articleContent);
-    formData.append('images', uploadedImages);
-    console.log(formData);
+    
+
+    // Function to create timestamp without seconds
+    function getTimestampWithoutSeconds() {
+      const now = new Date();
+      return moment(now).format('YYYY-MM-DD HH:mm');
+    }
+    
+
+    const postData = {
+      title: articleTitle,
+      content: articleContent,
+      images: `http://localhost:3001/api/uploads/${getTimestampWithoutSeconds()}-${imageName}`,
+    };
+
+
+
+    console.log(postData);
     try {
       const response = await fetch('/api/posts', {
         method: 'POST',
-        body: formData,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(postData),
       });
 
       if (!response.ok) {
@@ -61,19 +123,17 @@ function UserPage() {
       }
 
       const newData = await response.json();
-      setPosts([...posts, newData]);
+      // setPosts([...posts, newData]);
       setSuccessMessage('Article posted successfully!');
       setArticleTitle('');
       setArticleContent('');
-      setUploadedImages(null);
+      setUploadedImages('');
     } catch (error) {
       console.error('Error posting article:', error);
       setErrorMessage('Failed to post article. Please try again.');
     }
     
   };
-
-
 
   // handle create post
   const handleCreatePost = async (event) => {
@@ -90,15 +150,38 @@ function UserPage() {
   };
 
   const handleImageUpload = async (event) => {
+    // check title and other data
+    if (!articleTitle || articleContent.trim() === '') {
+      setErrorMessage('Please enter both title and content before uploading images.');
+      return
+    }
     const file = event.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setUploadedImages(reader.result);
-      };
-      reader.readAsDataURL(file);
+      // get file name
+      setImageName(file.name);
+      console.log(file.name);
+
+      const formData = new FormData();
+      formData.append('image', file);
+      try {
+        const response = await fetch('/api/upload-image', {
+          method: 'POST',
+          body: formData,
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to upload image');
+        }
+
+        const data = await response.json();
+        setUploadedImages(prevImages => [...prevImages, data.location]);
+      } catch (error) {
+        console.error('Error uploading image:', error);
+        setErrorMessage("Failed to upload image. Please try again.")
+      }
     }
   };
+  
 
   const handleImageRemove = (index) => {
     setUploadedImages(prevImages =>
@@ -109,14 +192,15 @@ function UserPage() {
   const handleDeletePost = async (id) => {
     try {
       await fetch(`/api/posts/${id}`, { method: 'DELETE' });
-      setPosts(posts.filter(item => item.id !== id));
+      // setPosts(posts.filter(item => item.id !== id));
     } catch (error) {
       console.error('Error deleting post:', error);
+      setErrorMessage('Failed to delete post. Please try again.');
     }
   };
 
   // Similar functions for handling social media links, site icons, and social media links data
- console.log(posts);
+//  console.log(posts);
   return (
     <Container>
       {/* Posts section */}
@@ -127,6 +211,7 @@ function UserPage() {
           value={articleTitle}
           onChange={handleTitleChange}
           placeholder="Enter article title..."
+          required
         />
         <textarea
           className="form-control mb-2"
@@ -134,6 +219,7 @@ function UserPage() {
           onChange={(e) => setArticleContent(e.target.value)}
           placeholder="Enter your article content..."
           rows={5}
+          required
         />
          <input
           type="file"

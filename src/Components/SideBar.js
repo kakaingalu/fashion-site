@@ -8,7 +8,7 @@ import { Col } from 'react-bootstrap';
 const Sidebar = ({ posts }) => {
   return (
     <div className="mt-5 left-0 position-fixed w-50">
-      <Col xs={12} md={6} className="d-none d-md-block">
+      <Col xs={12} md={5} className="d-none d-md-block">
       <Card className="border-0 mb-3">
         <Card.Title className='text-center'>Ad</Card.Title>
       </Card>

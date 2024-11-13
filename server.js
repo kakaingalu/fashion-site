@@ -4,9 +4,11 @@ import mysql from 'mysql2/promise';
 import cors from 'cors';
 import errorHandler from './errorHandler.js';
 import fs from 'fs';
-import {readFile} from 'fs/promises';
-import bodyParser from 'body-parser';
 import multer from 'multer';
+import path, {dirname} from 'path';
+import { fileURLToPath } from 'url';
+import moment from 'moment';
+
 
 
 const app = express();
@@ -14,33 +16,71 @@ const port = 3001;
 
 
 // Increase the request size limit
-app.use(bodyParser.json({limit: '50mb'}));
-app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
+app.use(express.json({limit: '50mb'}));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use(express.raw());
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+
+const uploadDir = path.join(__dirname, 'uploads');
+
+// Function to create the upload directory if it doesn't exist
+async function ensureUploadDirectory() {
+  try {
+    await new Promise((resolve, reject) => {
+      fs.access(uploadDir, fs.constants.F_OK, (err) => {
+        if (err) {
+          fs.mkdir(uploadDir, (err) => {
+            if (err) {
+              reject(err);
+            } else {
+              resolve();
+            }
+          });
+        } else {
+          resolve();
+        }
+      });
+    });
+  } catch (error) {
+    console.error('Error creating upload directory:', error);
+    throw error;
+  }
+}
+
+await ensureUploadDirectory();
 
 // For file uploads using multer
+
+
+// Function to create timestamp without seconds
+function getTimestampWithoutSeconds() {
+  const now = new Date();
+  return moment(now).format('YYYY-MM-DD HH:mm');
+}
+
 const upload = multer({
   storage: multer.diskStorage({
-    destination: function (req, file, cb) {
-      cb(null, './uploads/');
+    destination: function(req, file, cb) {
+      const uploadDir =  path.join(__dirname, './uploads');
+      fs.mkdir(uploadDir, { recursive: true }, (err) => {
+        if (err) {
+          console.error('Error creating upload directory:', err);
+        }
+      });
+      cb(null, uploadDir);
     },
     filename: function (req, file, cb) {
-      const uniqueSuffix = Date.now() + '-' + Math.random();
-      cb(null, file.fieldname + '-' + uniqueSuffix + '.' + file.originalname.split('.')[file.originalname.split('.').pop()]);
+      cb(null, `${getTimestampWithoutSeconds()}-${file.originalname}`);
     }
   }),
-  limits: { fileSize: 1024 * 1024 * 5 },
-  fileFilter: function (req, file, cb) {
-    // Filter file type
-    if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png') {
-      cb(null, true);
-    } else {
-      cb(new Error('Only images are allowed!'), false);
-    }
-  }
+  limits: { fileSize: 5 * 1024 * 1024 },
 });
 
-app.use(express.json()); // Middleware to parse JSON bodies
-app.use(express.urlencoded({ extended: true }));
+// app.use(express.json()); // Middleware to parse JSON bodies
+// app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 app.use(errorHandler);
 
@@ -95,8 +135,10 @@ async function createTables() {
               id INT AUTO_INCREMENT PRIMARY KEY,
               title VARCHAR(255),
               content TEXT,
+              image_location VARCHAR(255),
               views INT DEFAULT 0,
-              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              image_id VARCHAR(50) UNIQUE
           );
       `);
 
@@ -251,29 +293,85 @@ app.use((err, req, res, next) => {
 });
 
 
-app.post('/api/posts', upload.single('file'), async (req, res) => {
+// app.post('/api/posts', async (req, res) => {
+//   try {
+//     let postData;
+//     if (req.file) {
+
+//       const { title, content } = req.body;
+//   if (!title || !content) {
+//     return res.status(400).json({ message: 'Title and content are required' });
+//   }
+
+//        // Save Content title and image path to database
+//        const imagePath = `~/fashion-site/uploads/${req.file.originalname}`;
+//        await pool.query('INSERT INTO posts (title, content, images) VALUES (?, ?, ?)', [title, content, imagePath]);
+
+//         // image path
+//         console.log("file save at", imagePath); 
+
+//       // Create post data without image
+//       postData = { ...req.body, image_path: imagePath };
+//     } else {
+//       // Handle JSON
+//       postData = req.body;
+//     }
+    
+//     if (!postData || typeof postData !== 'object') {
+//       return res.status(400).json({ message: 'Invalid post data' });
+//     }
+    
+//     const newPost = await createPost(postData);
+//     res.status(201).json(newPost);
+//   } catch (error) {
+//     console.error('Error creating post:', error);
+//    next(error);
+//   }
+
+// });
+
+app.post('/api/posts', async (req, res) => {
   try {
-    let postData;
-    if (req.file) {
-      // Handle multipart/form-data
-      const base64 = req.file.buffer.toString('base64');
-      postData = { image: base64 };
-    } else {
-      // Handle JSON
-      postData = req.body;
-    }
-    
-    if (!postData || typeof postData !== 'object') {
-      return res.status(400).json({ message: 'Invalid post data' });
-    }
-    
-    const newPost = await createPost(postData);
+    const newPost = await createPost(req.body);
     res.status(201).json(newPost);
   } catch (error) {
     console.error('Error creating post:', error);
     res.status(400).json({ message: 'Invalid request body' });
   }
 });
+
+app.post('/api/upload-image', upload.single('image'), async (req, res) => {
+  try {
+    const imagePath = `/uploads/${req.file.filename}`;
+    
+    
+
+    // // Save the image location and ID to the database
+    // await pool.query('INSERT INTO posts (images, image_id) VALUES (?, ?, ?, ?)', 
+    //                 [ imagePath, imageId]);
+
+    // Send back both the original filename and the ID-based filename
+    res.json({location: imagePath});
+  } catch (error) {
+    console.error('Error uploading image:', error);
+    res.status(500).json({ error: 'Failed to upload image' });
+  }
+});
+
+// const validatePostBody = (req, res, next) => {
+//   if (!req.is('application/json')) {
+//     return res.status(400).json({ message: 'Invalid content-type' });
+//   }
+  
+  // const { title, content } = req.body;
+  // if (!title || !content) {
+  //   return res.status(400).json({ message: 'Title and content are required' });
+  // }
+  
+//   next();
+// };
+
+
 
 
 // const validatePostBody = (req, res, next) => {
@@ -291,6 +389,18 @@ app.post('/api/posts', upload.single('file'), async (req, res) => {
 
 
 // app.use('/api/posts', validatePostBody);
+// API endpoint to handle image uploads
+// app.post('/api/upload-image', upload.single('image'), async (req, res) => {
+//   try {
+//     const imagePath = `~/fashion-site/uploads/${req.file.originalname}`;
+//     await pool.query('INSERT INTO posts (images) VALUES (?)', [imagePath]);
+
+//     res.json({ location: `/uploads/${req.file.filename}` });
+//   } catch (error) {
+//     console.error('Error uploading image:', error);
+//     res.status(500).json({ error: 'Failed to upload image' });
+//   }
+// });
 
 app.get('/api/posts', async (req, res) => {
   try {
@@ -338,6 +448,24 @@ app.get('/api/social-media-links', (req, res) => {
 app.get('/api/site-icons', (req, res) => {
   res.json(siteIcons);
 });
+
+// get uploaded images
+app.get('/api/uploads/:filename', (req, res) => {
+  const { filename } = req.params
+  const filePath = path.join(__dirname, 'uploads', filename
+  );
+  res.sendFile(filePath);
+}
+);
+
+// get all images
+app.get('/api/uploads', (req, res) => {
+  const files = fs.readdirSync(uploadDir  
+  );
+  res.json(files);
+}
+);
+
 
 
 app.put('/api/posts/:id', async (req, res) => {
