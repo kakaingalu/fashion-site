@@ -3,56 +3,32 @@ import express from 'express';
 import cors from 'cors';
 import fs from 'fs/promises';
 
+
+
 const app = express();
 const port = 3001;
 
-// read JPEGs   them using fs.promises
-async function loadImage(filePath) {
-  const data = await fs.readFile(filePath);
-  return Buffer.from(data).toString('base64');
-}
 
-// imports with async functions
-const photo1Base64 = await loadImage('./src/Assets/sample 1.jpeg');
-const photo2Base64 = await loadImage('./src/Assets/sample 2.jpeg');
-const photo3Base64 = await loadImage('./src/Assets/sample 3.jpeg');
-const photo4Base64 = await loadImage('./src/Assets/sample 4.jpeg');
-const photo5Base64 = await loadImage('./src/Assets/sample 5.jpeg');
-const photo6Base64 = await loadImage('./src/Assets/sample 6.jpeg');
-const photo7Base64 = await loadImage('./src/Assets/sample 7.jpeg');
-const photo8Base64 = await loadImage('./src/Assets/sample 8.jpeg');
-const photo9Base64 = await loadImage('./src/Assets/sample 9.jpeg');
+app.use(express.static('public'));
 
-// social media icons
-const facebook = await loadImage('./src/Assets/facebook-app-symbol.png');
-const instagram = await loadImage('./src/Assets/instagram.png');
-const linkedin = await loadImage('./src/Assets/linkedin.png');
-const pinterest = await loadImage('./src/Assets/pinterest-logo.png');
-const twitter = await loadImage('./src/Assets/twitter.png');
-const youtube = await loadImage('./src/Assets/youtube.png');
-
-// other icons
-const siteIcon = await loadImage('./src/Assets/woman.png');
-const list = await loadImage('./src/Assets/list.png')
-const close = await loadImage('./src/Assets/close.png') 
 
 // main data
 
 // social media links
 const socialMediaLinks = [
-  { id: 1, url: "https://www.facebook.com", name: "Facebook", icon: `data:image/jpeg;base64,${facebook}` },
-  { id: 2, url: "https://www.twitter.com", name: "Twitter", icon: `data:image/jpeg;base64,${twitter}` },
-  { id: 3, url: "https://www.instagram.com", name: "Instagram", icon: `data:image/jpeg;base64,${instagram}` },
-  { id: 4, url: "https://www.linkedin.com", name: "Linkedin", icon: `data:image/jpeg;base64,${linkedin}` },
-  { id: 5, url: "https://www.pinterest.com", name: "Pinterest", icon: `data:image/jpeg;base64,${pinterest}` },
-  { id: 6, url: "https://www.youtube.com", name: "Youtube", icon: `data:image/jpeg;base64,${youtube}` },
+  { id: 1, url: "https://www.facebook.com", name: "Facebook", icon: "http://localhost:3001/assets/facebook-app-symbol.png" },
+  { id: 2, url: "https://www.twitter.com", name: "Twitter", icon: "http://localhost:3001/assets/twitter.png" },
+  { id: 3, url: "https://www.instagram.com", name: "Instagram", icon: "http://localhost:3001/assets/instagram.png" },
+  { id: 4, url: "https://www.linkedin.com", name: "Linkedin", icon: "http://localhost:3001/assets/linkedin.png" },
+  { id: 5, url: "https://www.pinterest.com", name: "Pinterest", icon: "http://localhost:3001/assets/pinterest-logo.png" },
+  { id: 6, url: "https://www.youtube.com", name: "Youtube", icon: "http://localhost:3001/assets/youtube.png" },
 ] 
 
 // site icons 
 const siteIcons = [
-  { id: 1, name: "Site Icon", icon: `data:image/jpeg;base64,${siteIcon}` },
-  { id: 2, name: "List", icon: `data:image/jpeg;base64,${list}` },
-  { id: 3, name: "Close", icon: `data:image/jpeg;base64,${close}` }
+  { id: 1, name: "Site Icon", icon: "http://localhost:3001/assets/woman.png" },
+  { id: 2, name: "List", icon: "http://localhost:3001/assets/list.png" },
+  { id: 3, name: "Close", icon: "http://localhost:3001/assets/close.png" }
 
 ]
 
@@ -75,7 +51,7 @@ const posts = [
       software like Aldus PageMaker including versions of Lorem 
       Ipsum.
       `,
-    image: `data:image/jpeg;base64,${photo1Base64}`,
+    image:"http://localhost:3001/assets/sample%201.jpeg",
     viewCount: 20,
     comments: [
       { id: 1, content: "This is a great post!" },
@@ -103,7 +79,7 @@ const posts = [
       Various versions have evolved over the years, sometimes by accident, sometimes on purpose 
       (injected humour and the like).
       `,
-    image: `data:image/jpeg;base64,${photo2Base64}`, 
+    image: "http://localhost:3001/assets/sample%202.jpeg", 
     viewCount: 30,
     comments: [
       { id: 1, content: "This is a great post!" },
@@ -131,7 +107,7 @@ const posts = [
       popular during the Renaissance. The first line of Lorem Ipsum, "Lorem ipsum dolor sit amet..",
       comes from a line in section 1.10.32.
       `,
-    image: `data:image/jpeg;base64,${photo3Base64}`,
+    image: "http://localhost:3001/assets/sample%203.jpeg",
     viewCount: 40,
     comments: [
       { id: 1, content: "This is a great post!" },
@@ -158,7 +134,7 @@ const posts = [
       to generate Lorem Ipsum which looks reasonable. The generated Lorem Ipsum is therefore always free 
       from repetition, injected humour, or non-characteristic words etc.
       `,
-    image: `data:image/jpeg;base64,${photo4Base64}`, 
+    image: "http://localhost:3001/assets/sample%204.jpeg", 
     viewCount: 50,
     comments: [
       { id: 1, content: "This is a great post!" },
@@ -188,7 +164,7 @@ const posts = [
       software like Aldus PageMaker including versions of Lorem 
       Ipsum.
       `,
-    image: `data:image/jpeg;base64,${photo5Base64}`,
+    image: "http://localhost:3001/assets/sample%205.jpeg",
     viewCount: 70,
     comments: [
       { id: 1, content: "This is a great post!" },
@@ -216,7 +192,7 @@ const posts = [
       Various versions have evolved over the years, sometimes by accident, sometimes on purpose 
       (injected humour and the like).
       `,
-    image: `data:image/jpeg;base64,${photo6Base64}`,
+    image: "http://localhost:3001/assets/sample%206.jpeg",
     viewCount: 80,
     comments: [
       { id: 1, content: "This is a great post!" },
@@ -244,7 +220,7 @@ const posts = [
       popular during the Renaissance. The first line of Lorem Ipsum, "Lorem ipsum dolor sit amet..",
       comes from a line in section 1.10.32.
       `,
-    image:  `data:image/jpeg;base64,${photo7Base64}`,
+    image:  "http://localhost:3001/assets/sample%207.jpeg",
     viewCount: 90,
     comments: [
       { id: 1, content: "This is a great post!" },
@@ -271,7 +247,7 @@ const posts = [
       to generate Lorem Ipsum which looks reasonable. The generated Lorem Ipsum is therefore always free 
       from repetition, injected humour, or non-characteristic words etc.
       `,
-    image: `data:image/jpeg;base64,${photo8Base64}`,
+    image: "http://localhost:3001/assets/sample%208.jpeg",
     viewCount: 100,
     comments: [
       { id: 1, content: "This is a great post!" },
@@ -301,7 +277,7 @@ const posts = [
       software like Aldus PageMaker including versions of Lorem 
       Ipsum.
       `,
-    image: `data:image/jpeg;base64,${photo9Base64}`,
+    image: "http://localhost:3001/assets/sample%209.jpeg",
     viewCount: 120,
     comments: [
       { id: 1, content: "This is a great post!" },

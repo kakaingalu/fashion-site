@@ -33,11 +33,16 @@ function Home() {
   const location = useLocation();
   const { posts, socialMedia, siteIcons, loading, errors} = useFetchRedux();
   const dispatch = useDispatch();
-
   useEffect(() => {
-    dispatch(fetchSocialMedia());
-    dispatch(fetchPosts());
-    dispatch(fetchSiteIcons());
+    const fetchData = async () => {
+      await dispatch(fetchSocialMedia());
+      await dispatch(fetchPosts());
+      await dispatch(fetchSiteIcons());
+    };
+  
+    fetchData().catch(error => {
+      console.error('Error fetching data:', error);
+    });
   }, [dispatch]);
 
 
@@ -49,34 +54,23 @@ function Home() {
 }, [location]);
 
   // site check for loading data
-  if (loading) {
+  if (loading || !socialMedia.length || !Object.keys(siteIcons).length ) {
     return (
       <>
         <div className="d-flex justify-content-center align-items-center min-vh-100 bg-light flex-wrap">
             <Spinner animation="border" role="status">
               <span className="visually-hidden">Loading...</span>
             </Spinner>
-            <div className="ms-2">Loading...</div>
+            <div className="ms-2">Loading...Please Wait</div>
         </div>
       </>
     );
   }
 
-  if (!socialMedia.length || !Object.keys(siteIcons).length) {
-    return  <>
-      <div className="d-flex justify-content-center align-items-center min-vh-100 bg-light flex-wrap">
-          <Spinner animation="border" role="status">
-            <span className="visually-hidden">Loading...</span>
-          </Spinner>
-          <div className="ms-2">Loading...Please Wait</div>
-      </div>
-    </>
-  }
-
   if (errors) {
     return (
       <div className="d-flex justify-content-center align-items-center min-vh-100 bg-danger text-white">
-        <div className="fs-4 fw-bold">{errors}</div>
+        <div className="fs-4 fw-bold">{`No internet connection found:${errors}`}</div>
       </div>
     );
   }

@@ -14,7 +14,6 @@ import moment from 'moment';
 const app = express();
 const port = 3001;
 
-app.use(express.static('public'));
 
 // Increase the request size limit
 app.use(express.json({limit: '50mb'}));
@@ -65,7 +64,7 @@ function getTimestampWithoutSeconds() {
 const upload = multer({
   storage: multer.diskStorage({
     destination: function(req, file, cb) {
-      const uploadDir =  path.join(__dirname, 'public', 'uploads');
+      const uploadDir =  path.join(__dirname, './uploads');
       fs.mkdir(uploadDir, { recursive: true }, (err) => {
         if (err) {
           console.error('Error creating upload directory:', err);
@@ -178,23 +177,67 @@ async function createTables() {
 }
 
 
-// social media links
+// Load images asynchronously
+async function loadImages() {
+  const photos = [];
+  const icons = [];
+
+  for (let i = 1; i <= 9; i++) {
+    try {
+      const filePath = `./src/Assets/sample ${i}.jpeg`;
+      const data = await fs.promises.readFile(filePath);
+      photos.push(Buffer.from(data).toString('base64'));
+    } catch (error) {
+      console.error(`Error loading photo ${i}:`, error);
+    }
+  }
+
+  // Load icons asynchronously
+  const iconPromises = [
+    fs.promises.readFile('./src/Assets/facebook-app-symbol.png'),
+    fs.promises.readFile('./src/Assets/instagram.png'),
+    fs.promises.readFile('./src/Assets/linkedin.png'),
+    fs.promises.readFile('./src/Assets/pinterest-logo.png'),
+    fs.promises.readFile('./src/Assets/twitter.png'),
+    fs.promises.readFile('./src/Assets/youtube.png'),
+    fs.promises.readFile('./src/Assets/woman.png'),
+    fs.promises.readFile('./src/Assets/list.png'),
+    fs.promises.readFile('./src/Assets/close.png')
+  ];
+
+  const iconsData = await Promise.all(iconPromises);
+
+  icons.push(Buffer.from(iconsData[0]).toString('base64'));
+  icons.push(Buffer.from(iconsData[1]).toString('base64'));
+  icons.push(Buffer.from(iconsData[2]).toString('base64'));
+  icons.push(Buffer.from(iconsData[3]).toString('base64'));
+  icons.push(Buffer.from(iconsData[4]).toString('base64'));
+  icons.push(Buffer.from(iconsData[5]).toString('base64'));
+  icons.push(Buffer.from(iconsData[6]).toString('base64'));
+  icons.push(Buffer.from(iconsData[7]).toString('base64'));
+  icons.push(Buffer.from(iconsData[8]).toString('base64'));
+
+  return { photos, icons };
+};
+
+const { photos, icons } = await loadImages();
+
+// Social media links
 const socialMediaLinks = [
-  { id: 1, url: "https://www.facebook.com", name: "Facebook", icon: "http://localhost:3001/assets/facebook-app-symbol.png" },
-  { id: 2, url: "https://www.twitter.com", name: "Twitter", icon: "http://localhost:3001/assets/twitter.png" },
-  { id: 3, url: "https://www.instagram.com", name: "Instagram", icon: "http://localhost:3001/assets/instagram.png" },
-  { id: 4, url: "https://www.linkedin.com", name: "Linkedin", icon: "http://localhost:3001/assets/linkedin.png" },
-  { id: 5, url: "https://www.pinterest.com", name: "Pinterest", icon: "http://localhost:3001/assets/pinterest-logo.png" },
-  { id: 6, url: "https://www.youtube.com", name: "Youtube", icon: "http://localhost:3001/assets/youtube.png" },
-] 
+  { id: 1, url: "https://www.facebook.com", name: "Facebook", icon: `data:image/jpeg;base64,${icons[0]}` },
+  { id: 2, url: "https://www.twitter.com", name: "Twitter", icon: `data:image/jpeg;base64,${icons[4]}` },
+  { id: 3, url: "https://www.instagram.com", name: "Instagram", icon: `data:image/jpeg;base64,${icons[1]}` },
+  { id: 4, url: "https://www.linkedin.com", name: "Linkedin", icon: `data:image/jpeg;base64,${icons[2]}` },
+  { id: 5, url: "https://www.pinterest.com", name: "Pinterest", icon: `data:image/jpeg;base64,${icons[3]}` },
+  { id: 6, url: "https://www.youtube.com", name: "Youtube", icon: `data:image/jpeg;base64,${icons[5]}` },
+];
 
-// site icons 
+// Site icons 
 const siteIcons = [
-  { id: 1, name: "Site Icon", icon: "http://localhost:3001/assets/woman.png" },
-  { id: 2, name: "List", icon: "http://localhost:3001/assets/list.png" },
-  { id: 3, name: "Close", icon: "http://localhost:3001/assets/close.png" }
-
-]
+  { id: 1, name: "Site Icon", icon: `data:image/jpeg;base64,${icons[6]}` },
+  { id: 2, name: "List", icon: `data:image/jpeg;base64,${icons[7]}` },
+  { id: 3, name: "Close", icon: `data:image/jpeg;base64,${icons[8]}` }
+];
 
 async function createPost(postData) {
   if (!postData || typeof postData !== 'object') {
@@ -270,6 +313,37 @@ app.post('/api/upload-image', upload.single('image'), async (req, res) => {
   }
 });
 
+// const validatePostBody = (req, res, next) => {
+//   if (!req.is('application/json')) {
+//     return res.status(400).json({ message: 'Invalid content-type' });
+//   }
+  
+  // const { title, content } = req.body;
+  // if (!title || !content) {
+  //   return res.status(400).json({ message: 'Title and content are required' });
+  // }
+  
+//   next();
+// };
+
+
+
+
+// const validatePostBody = (req, res, next) => {
+//   if (!req.is('application/json')) {
+//     return res.status(400).json({ message: 'Invalid content-type' });
+//   }
+  
+//   const { title, content } = req.body;
+//   if (!title || !content) {
+//     return res.status(400).json({ message: 'Title and content are required' });
+//   }
+  
+//   next();
+// };
+
+
+// app.use('/api/posts', validatePostBody);
 
 app.get('/api/posts', async (req, res) => {
   try {
@@ -295,6 +369,16 @@ app.get('/api/posts/:id', async (req, res) => {
   } catch (error) {
     console.error('Error fetching post:', error);
     res.status(500).json({ message: 'Failed to fetch post' });
+  }
+});
+
+app.get('/test-db', async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT * FROM posts LIMIT 1');
+    res.json(rows);
+  } catch (error) {
+    console.error('Error connecting to database:', error);
+    res.status(500).json({ message: 'Failed to connect to database' });
   }
 });
 
