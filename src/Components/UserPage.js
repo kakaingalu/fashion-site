@@ -1,153 +1,96 @@
+// React imports
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Button, Form, Alert } from 'react-bootstrap';
+
+// Bootstrap imports
+import { Container, Row, Col, Button, Form, Alert, Card } from 'react-bootstrap';
+
+// Redux imports
+import { useDispatch } from 'react-redux';
+import { addPost, fetchPosts, imageUpload, deletePost } from '../store/reducer.js';
+import { useFetchRedux } from '../hooks/useFetchRedux.js';
+import { fetchSocialMedia, fetchSiteIcons } from '../store/reducer.js';
+
+// Moment.js import
 import moment from 'moment';
 
+// module imports
+import Footer from './Footer.js';
+
+
 function UserPage() {
-  // const [posts, setPosts] = useState([]);
-  // const [socialMediaLinks, setSocialMediaLinks] = useState([]);
-  // const [siteIcons, setSiteIcons] = useState([]);
-  // const [socialMediaLinksData, setSocialMediaLinksData] = useState([]);
   const [articleContent, setArticleContent] = useState('');
   const [successMessage, setSuccessMessage] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
   const [articleTitle, setArticleTitle] = useState('');
   const [uploadedImages, setUploadedImages] = useState([]);
   const [imageName, setImageName] = useState('');
- 
+  const dispatch = useDispatch();
 
+   const { posts} = useFetchRedux();
 
-  // useEffect(() => {
-  //   fetchAllData();
-  // }, []);
-  
-
-  // const fetchAllData = async () => {
-  //   try {
-  //     const postsResponse = await fetch('/api/posts');
-  //     const socialMediaLinksResponse = await fetch('/api/social-media-links');
-  //     const siteIconsResponse = await fetch('/api/site-icons');
-  //     const socialMediaLinksDataResponse = await fetch('/api/social-media-links');
-
-  //     const [posts] = await Promise.all([postsResponse.json()]);
-  //     const [socialMediaLinks] = await Promise.all([socialMediaLinksResponse.json()]);
-  //     const [siteIcons] = await Promise.all([siteIconsResponse.json()]);
-  //     const [socialMediaLinksData] = await Promise.all([socialMediaLinksDataResponse.json()]);
-
-  //     setPosts(posts);
-  //     setSocialMediaLinks(socialMediaLinks);
-  //     setSiteIcons(siteIcons);
-  //     setSocialMediaLinksData(socialMediaLinksData);
-  //   } catch (error) {
-  //     console.error('Error fetching data:', error);
-  //     // setErrorMessage('Failed to fetch data. Please try again.');
-  //   }
-  // };
-
-  // post article
-  // const postArticle = async () => {
-  //   if (!articleTitle || articleContent.trim() === '' || uploadedImages.length === 0) {
-  //     setErrorMessage('Please enter both title, content, and at least one image.');
-  //     return;
-  //   }
-  //   const formData = new FormData();
-  //   formData.append('title', articleTitle);
-  //   formData.append('content', articleContent);
-  //   formData.append('images', uploadedImages);
+    useEffect(() => {
+      const fetchData = async () => { 
+        await dispatch(fetchSocialMedia());
+        await dispatch(fetchPosts());
+        await dispatch(fetchSiteIcons());
+      };
     
-  //   // uploadedImages.forEach((imageLocation, index) => {
-  //   //   formData.append(`images[${index}]`, { path: imageLocation });
-  //   // });
-  //   // console.log("article content:", articleContent, "article tile:", articleTitle, "uploaded images:", uploadedImages)
-  //   console.log("form data", formData);
-
-  //   try {
-  //     const response = await fetch('/api/posts', {
-  //       method: 'POST',
-  //       body: formData,
-  //     });
-
-  //     if (!response.ok) {
-  //       throw new Error('Network response was not ok');
-  //     }
-
-  //     // const newData = await response.json();
-  //     // // setPosts([...posts, newData]);
-  //     setSuccessMessage('Article posted successfully!');
-      
-  //   } catch (error) {
-  //     console.error('Error posting article:', error);
-  //     setErrorMessage('Failed to post article. Please try again.');
-  //   }
-
-  //   setArticleTitle('');
-  //   setArticleContent('');
-  //   setUploadedImages([]);
-    
-  // };
+      fetchData().catch(error => {
+        console.error('Error fetching data:', error);
+      });
+    }, [dispatch]);
 
 
-  const postArticle = async () => {
-    if (!articleTitle || articleContent.trim() === '' || !imageName) {
-      setErrorMessage('Please enter both title, content, and at least one image.');
-      return;
-    }
-    
 
-    // Function to create timestamp without seconds
+  //   // Function to create timestamp without seconds
     function getTimestampWithoutSeconds() {
       const now = new Date();
       return moment(now).format('YYYY-MM-DD HH:mm');
     }
-    
 
-    const postData = {
-      title: articleTitle,
-      content: articleContent,
-      images: `http://localhost:3001/api/uploads/${getTimestampWithoutSeconds()}-${imageName}`,
-    };
-
-
-
-    console.log(postData);
-    try {
-      const response = await fetch('/api/posts', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(postData),
-      });
-
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
+    const handleCreatePost = async (event) => {
+      event.preventDefault();
+      console.log("handleCreatePost called");
+      
+      if (!articleTitle || articleContent.trim() === '' || !imageName || uploadedImages.length === 0) {
+        setErrorMessage('Please enter both title, content, at least one image, and upload images.');
+        return;
       }
-
-      const newData = await response.json();
-      // setPosts([...posts, newData]);
-      setSuccessMessage('Article posted successfully!');
-      setArticleTitle('');
-      setArticleContent('');
-      setUploadedImages('');
-    } catch (error) {
-      console.error('Error posting article:', error);
-      setErrorMessage('Failed to post article. Please try again.');
-    }
     
-  };
+      console.log('Attempting to dispatch addPostAction with:', {
+        title: articleTitle,
+        content: articleContent,
+        images: `http://localhost:3001/uploads/${getTimestampWithoutSeconds()}-${imageName}`,
+        uploadedImages: uploadedImages
+      });
+    
+      try {
+       const postData = {
+          title: articleTitle,
+          content: articleContent,
+          images: `http://localhost:3001/uploads/${getTimestampWithoutSeconds()}-${imageName}`,
+        };
 
-  // handle create post
-  const handleCreatePost = async (event) => {
-    event.preventDefault();
-    await postArticle();
-  };
+        const result = await dispatch(addPost(postData));
+        
+        console.log('addPostAction dispatched successfully');
+        setSuccessMessage('Article posted successfully!');
+        setArticleTitle('');
+        setArticleContent('');
+        setUploadedImages([]);
+    
+      } catch (error) {
+        console.error('Error posting article:', error);
+        setErrorMessage('Failed to post article. Please try again.');
+      }
+    };
+    
 
   const handleTitleChange = (e) => {
     setArticleTitle(e.target.value);
   };
 
-  const handleContentChange = (e) => {
-    setArticleContent(e.target.value);
-  };
+
 
   const handleImageUpload = async (event) => {
     // check title and other data
@@ -161,20 +104,12 @@ function UserPage() {
       setImageName(file.name);
       console.log(file.name);
 
-      const formData = new FormData();
-      formData.append('image', file);
       try {
-        const response = await fetch('/api/upload-image', {
-          method: 'POST',
-          body: formData,
-        });
-        
-        if (!response.ok) {
-          throw new Error('Failed to upload image');
-        }
+        const postImage = file;
 
-        const data = await response.json();
-        setUploadedImages(prevImages => [...prevImages, data.location]);
+        const result = await dispatch(imageUpload(postImage));
+        console.log('Image uploaded successfully:', result);
+        setUploadedImages(prevImages => [...prevImages, result.payload.location]);
       } catch (error) {
         console.error('Error uploading image:', error);
         setErrorMessage("Failed to upload image. Please try again.")
@@ -191,20 +126,55 @@ function UserPage() {
 
   const handleDeletePost = async (id) => {
     try {
-      await fetch(`/api/posts/${id}`, { method: 'DELETE' });
-      // setPosts(posts.filter(item => item.id !== id));
+      await dispatch(deletePost(id));
+      setSuccessMessage('Post deleted successfully!');
+
+      const updatedPosts = await dispatch(fetchPosts());
+      // setPosts(updatedPosts);
     } catch (error) {
       console.error('Error deleting post:', error);
       setErrorMessage('Failed to delete post. Please try again.');
     }
   };
 
-  // Similar functions for handling social media links, site icons, and social media links data
-//  console.log(posts);
+  // truncate text
+  const truncateText = (text, maxLength = 150) => {
+    if (!text) return '';
+    if (text.length <= maxLength) return text;
+    return `${text.substring(0, maxLength)}...`;
+  };
+
+  const truncatedContent = posts?.content ? truncateText(posts.content) : '';
+
   return (
     <Container>
       {/* Posts section */}
-      <h2>Posts</h2>
+      <h1>Your Posts</h1>
+      <Col xs={10} md={12} className="ps-md-5 h-100 custom-no-padding">
+                <Container className='d-flex h-100 p-0 m-0' fluid>
+                  <Row xs={1} md={3} lg={3} className='flex-grow-1 overflow-y-auto m-5 p-0'>
+                    {posts.map((post, index) => (
+                      <Col className='' key={index}>
+                        <Card className="mb-4">
+                          <Card.Header className='fw-bold text-center'>{post.title}</Card.Header>
+                          <Card.Body style={{ maxHeight: '1000px', overflow: 'hidden' }}>
+                            <Card.Img variant="top" alt={`Image for ${post.title}`}  src={post.images} fluid style={{ height: '400px' }} />
+                            <Card.Text >{truncatedContent}</Card.Text>
+                          </Card.Body>
+                          <div className='p-2'>
+                            <div className="d-flex justify-content-between">
+                              <Button variant="danger" size="sm" onClick={() => handleDeletePost(post.id)}>Delete</Button>
+                              <Button variant="primary" size="sm">Edit</Button>
+                            </div>
+                          </div>
+                        </Card>
+                      </Col>
+                    ))}
+                  </Row>
+                  <Footer/>
+                </Container>
+              </Col>
+      <h2>Create New Posts</h2>
       <Form onSubmit={handleCreatePost}>
       <input
           className="form-control mb-2"
@@ -236,14 +206,7 @@ function UserPage() {
       {errorMessage && (
         <div className="alert alert-danger mt-2">{errorMessage}</div>
       )}
-      {/* <ul>
-        {posts.map((post) => (
-          <li key={post.id}>
-            {post.title}
-            <Button variant="danger" size="sm" onClick={() => handleDeletePost(post.id)}>Delete</Button>
-          </li>
-        ))}
-      </ul> */}
+      
 
       {/* Social Media Links section */}
       <h2>Social Media Links</h2>

@@ -64,6 +64,72 @@ export const fetchSiteIcons = createAsyncThunk(
   }
 );
 
+export const addPost = createAsyncThunk(
+  'fetch/addPost',
+  async (postData, thunkAPI) => {
+    try {
+      const instance = axios.create({
+        baseURL: 'http://localhost:3001',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        
+      });
+      const response = await instance.post('/api/posts', postData);
+      return response.data;
+    } catch (error) {
+      console.error('Error adding post:', error);
+      throw error;
+    }
+  }
+);
+
+export const imageUpload = createAsyncThunk(
+  'fetch/imageUpload',
+  async (formData, thunkAPI) => {
+    try {
+      const instance = axios.create({
+        baseURL: 'http://localhost:3001',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+
+      });
+      const response = await instance.post('/api/upload-image', formData);
+      return response.data;
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      throw error;
+    }
+  }
+);
+
+export const deletePost = createAsyncThunk(
+  'fetch/deletePost',
+  async (id, thunkAPI) => {
+    try {
+      const instance = axios.create({
+        baseURL: 'http://localhost:3001',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+
+      });
+      const response = await instance.delete(`/api/posts/${id}`);
+
+      // Check if the response is empty
+      if (!response.data || Object.keys(response.data).length === 0) {
+        throw new Error('No data returned from server');
+      }
+      
+      return response.data;
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      throw error;
+    }
+  }
+);
+
 const fetchSlice = createSlice({
   name: 'fetch',
   initialState: {
@@ -105,6 +171,45 @@ const fetchSlice = createSlice({
         state.status = 'succeeded';
       })
       .addCase(fetchSiteIcons.rejected, (state, action) => {
+        state.error = action.error.message;
+        state.status = 'failed';
+      })
+      .addCase( addPost.pending, (state) => {
+        state.status = 'loading';
+      })
+      .addCase( addPost.fulfilled, (state, action) => {
+        console.log(action.payload);
+        state.posts.push(action.payload);
+        state.status = 'succeeded';
+      })
+      .addCase( addPost.rejected, (state, action) => {
+        console.error('Error adding post:', action.error.message);
+        state.error = action.error.message;
+        state.status = 'failed';
+      })
+      .addCase( imageUpload.pending, (state) => {
+        state.status = 'loading';
+      })
+      .addCase( imageUpload.fulfilled, (state, action) => {
+        console.log(action.payload);
+        state.posts.push(action.payload);
+        state.status = 'succeeded';
+      })
+      .addCase( imageUpload.rejected, (state, action) => {
+        console.error('Error uploading image:', action.error.message);
+        state.error = action.error.message;
+        state.status = 'failed';
+      })
+      .addCase( deletePost.pending, (state) => {
+        state.status = 'loading';
+      })
+      .addCase( deletePost.fulfilled, (state, action) => {
+        console.log(action.payload);
+        state.posts = state.posts.filter(post => post.id !== action.payload.id);
+        state.status = 'succeeded';
+      })
+      .addCase( deletePost.rejected, (state, action) => {
+        console.error('Error deleting post:', action.error.message);
         state.error = action.error.message;
         state.status = 'failed';
       });
