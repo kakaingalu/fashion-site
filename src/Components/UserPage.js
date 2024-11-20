@@ -64,14 +64,25 @@ function UserPage() {
     }
   };
 
-  // truncate text
-  const truncateText = (text, maxLength = 150) => {
-    if (!text) return '';
-    if (text.length <= maxLength) return text;
-    return `${text.substring(0, maxLength)}...`;
-  };
+  // // truncate text
+  // const truncateText = (text, maxLength = 150) => {
+  //   if (!text) return '';
+  //   if (text.length <= maxLength) return text;
+  //   return `${text.substring(0, maxLength)}...`;
+  // };
 
-  const truncatedContent = posts?.content ? truncateText(posts.content) : '';
+  const truncateText = (content, maxLength = 150) => {
+    if (!content || content.length <= maxLength) {
+      return content;
+    }
+  
+    const truncatedContent = content.substring(0, maxLength - 3);
+    return `${truncatedContent}...`;
+  };
+  
+  // const truncatedContent = posts?.content ? truncateText(posts.content) : '';
+  console.log('content:', posts.content);
+  console.log('post:', posts);
 
   const handleOpen = () => setShowModal(true);
   
@@ -81,7 +92,7 @@ function UserPage() {
       {/*Navigation bar*/}
       <NavBar/>
       {/* Posts section */}
-      <h1 className='text-center'>Your Posts</h1>
+      <h1 className='mt-5 pt-5 text-center'>Your Posts</h1>
       <ToastStack successMessage={successMessage} errorMessage={errorMessage} />
       {/* Check if posts exist */}
       {posts.length === 0 && (
@@ -105,7 +116,7 @@ function UserPage() {
                           <Card.Header className='fw-bold text-center'>{post.title}</Card.Header>
                           <Card.Body style={{ maxHeight: '1000px', overflow: 'hidden' }}>
                             <Card.Img variant="top" alt={`Image for ${post.title}`}  src={post.images} fluid style={{ height: '400px' }} />
-                            <Card.Text >{truncatedContent}</Card.Text>
+                            <Card.Text >{truncateText(post.content)}</Card.Text>
                           </Card.Body>
                           <div className='p-2'>
                             <div className="d-flex justify-content-between">
