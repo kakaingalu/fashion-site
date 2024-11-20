@@ -217,9 +217,22 @@ async function getPosts() {
 }
 
 async function getPostById(postId) {
-  const [row] = await pool.query('SELECT * FROM posts WHERE id = ?', [postId]);
-  return row;
+  if (!postId || typeof postId !== 'number') {
+    throw new Error('Invalid post ID');
+  }
+
+  try {
+    const [row] = await pool.query('SELECT * FROM posts WHERE id = ?', [postId]);
+    if (!row) {
+      throw new Error('Post not found');
+    }
+    return row;
+  } catch (error) {
+    console.error('Error fetching post:', error);
+    throw error;
+  }
 }
+
 
 async function updatePost(postId, postData) {
   await pool.query('UPDATE posts SET ? WHERE id = ?', [postData, postId]);
@@ -227,8 +240,19 @@ async function updatePost(postId, postData) {
 }
 
 async function deletePost(postId) {
+  if (!postId || isNaN(postId) ) {
+    throw new Error('Invalid post ID');
+  }
+
+  try {
   await pool.query('DELETE FROM posts WHERE id = ?', [postId]);
-  return getPostById(postId);
+  const deletedPost = await getPostById(postId);
+  return { message: 'Post deleted successfully' };
+  } catch (error) {
+    console.error('Error deleting post:', error);
+    console.log("id:", postId);
+    throw new Error('Failed to delete post');
+  }
 }
 
 // Initialize the app
@@ -261,7 +285,7 @@ app.post('/api/posts', async (req, res) => {
 
 app.post('/api/upload-image', upload.single('image'), async (req, res) => {
   try {
-    const imagePath = `/uploads/${req.file.filename}`;
+    const imagePath = `/public/uploads/${req.file.filename}`;
 
     res.json({location: imagePath});
   } catch (error) {
@@ -339,10 +363,15 @@ app.put('/api/posts/:id', async (req, res) => {
 
 app.delete('/api/posts/:id', async (req, res) => {
   try {
+    const postId = parseInt(req.params.id);
+    if (isNaN(postId)) {
+      return res.status(400).json({ message: 'Invalid post ID' });
+    }
     const deletedPost = await deletePost(req.params.id);
     res.json(deletedPost);
   } catch (error) {
     console.error('Error deleting post:', error);
+    console.log("id:", req.params.id);
     res.status(500).json({ message: 'Failed to delete post' });
   }
 });

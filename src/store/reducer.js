@@ -90,9 +90,6 @@ export const imageUpload = createAsyncThunk(
     try {
       const instance = axios.create({
         baseURL: 'http://localhost:3001',
-        headers: {
-          'Content-Type': 'application/json',
-        },
 
       });
       const response = await instance.post('/api/upload-image', formData);

@@ -22,6 +22,7 @@ import {Container} from 'react-bootstrap';
 import {Row} from 'react-bootstrap';
 import {Col} from 'react-bootstrap';
 import {Spinner} from 'react-bootstrap';
+import {Alert} from 'react-bootstrap';
 
 
 
@@ -99,7 +100,18 @@ function Home() {
               {/* <Col xs={12} md={3} className="d-none d-md-block">
                 <SideBar posts={posts} />
               </Col> */}
+
               {/* Main Content */}
+              {/* Check if posts exist */}
+              {posts.length === 0 && (
+                <div className="container mt-5 pt-5 mx-auto">
+                  <div className="d-flex justify-content-center w-100">
+                  <Alert variant="" className="fw-bold text-center">
+                    No posts Available
+                  </Alert>
+                  </div>
+                </div>
+              )}
               <Col xs={10} md={12} className="ps-md-5 h-100 custom-no-padding">
                 <Container className='d-flex h-100 p-0 m-0' fluid>
                   <Row xs={1} md={3} lg={3} className='flex-grow-1 overflow-y-auto m-5 p-0'>
