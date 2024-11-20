@@ -71,7 +71,7 @@ function UserPage() {
   //   return `${text.substring(0, maxLength)}...`;
   // };
 
-  const truncateText = (content, maxLength = 150) => {
+  const truncateText = (content, maxLength = 140) => {
     if (!content || content.length <= maxLength) {
       return content;
     }
