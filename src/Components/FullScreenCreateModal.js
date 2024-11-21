@@ -10,6 +10,9 @@ import { useDispatch } from 'react-redux';
 // Moment.js import
 import moment from 'moment';
 
+
+
+
 function FullScreenCreateModal({ show, handleClose, setErrorMessage, setSuccessMessage }) {
     const [articleTitle, setArticleTitle] = useState('');
     const [uploadedImages, setUploadedImages] = useState([]);
@@ -22,6 +25,11 @@ function FullScreenCreateModal({ show, handleClose, setErrorMessage, setSuccessM
   function getTimestampWithoutSeconds() {
     const now = new Date();
     return moment(now).format('YYYY-MM-DD HH:mm');
+  }
+
+  // function to reset page
+  function refreshPage() {
+    window.location.reload(false);
   }
 
   const handleCreatePost = async (event) => {
@@ -73,6 +81,7 @@ function FullScreenCreateModal({ show, handleClose, setErrorMessage, setSuccessM
       setErrorMessage('Failed to post article. Please try again.');
     }
     handleClose();
+    refreshPage();
   };
 
   return (

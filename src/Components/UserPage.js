@@ -42,6 +42,11 @@ function UserPage() {
       });
     }, [dispatch]);
 
+    if (errorMessage === 'No post found with the given ID') {
+      setErrorMessage(false);
+    }
+    
+
   const handleDeletePost = async (id) => {
     try {
       await dispatch(deletePost(id));
@@ -79,7 +84,7 @@ function UserPage() {
     setEditId(id);
     setShowEditModal(true);
   }
-  
+
   return (
     <Container>
       
