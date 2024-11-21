@@ -4,20 +4,101 @@ import mysql from 'mysql2/promise';
 import cors from 'cors';
 import errorHandler from './errorHandler.js';
 import fs from 'fs';
-import {readFile} from 'fs/promises';
+import multer from 'multer';
+import path, {dirname} from 'path';
+import { fileURLToPath } from 'url';
+import moment from 'moment';
+
+
 
 const app = express();
 const port = 3001;
 
-app.use(express.json()); // Middleware to parse JSON bodies
-app.use(express.urlencoded({ extended: true }));
+
+// Increase the request size limit
+app.use(express.json({limit: '50mb'}));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use(express.raw());
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+
+const uploadDir = path.join(__dirname, 'uploads');
+
+// Function to create the upload directory if it doesn't exist
+async function ensureUploadDirectory() {
+  try {
+    await new Promise((resolve, reject) => {
+      fs.access(uploadDir, fs.constants.F_OK, (err) => {
+        if (err) {
+          fs.mkdir(uploadDir, (err) => {
+            if (err) {
+              reject(err);
+            } else {
+              resolve();
+            }
+          });
+        } else {
+          resolve();
+        }
+      });
+    });
+  } catch (error) {
+    console.error('Error creating upload directory:', error);
+    throw error;
+  }
+}
+
+await ensureUploadDirectory();
+
+// For file uploads using multer
+
+
+// Function to create timestamp without seconds
+function getTimestampWithoutSeconds() {
+  const now = new Date();
+  return moment(now).format('YYYY-MM-DD HH:mm');
+}
+
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: function(req, file, cb) {
+      const uploadDir =  path.join(__dirname, './uploads');
+      fs.mkdir(uploadDir, { recursive: true }, (err) => {
+        if (err) {
+          console.error('Error creating upload directory:', err);
+        }
+      });
+      cb(null, uploadDir);
+    },
+    filename: function (req, file, cb) {
+      cb(null, `${getTimestampWithoutSeconds()}-${file.originalname}`);
+    }
+  }),
+  limits: { fileSize: 5 * 1024 * 1024 },
+});
+
+// app.use(express.json()); // Middleware to parse JSON bodies
+// app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 app.use(errorHandler);
 
 
 app.use(cors({
-  origin: 'http://localhost:3000', // Only allow requests from this origin
+  origin: ['http://localhost:3000', 'http://localhost:3001'],
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+
+// Server-side configuration (Node.js example using Express)
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  next();
+});
 
 
 // MySQL connection configuration
@@ -54,8 +135,10 @@ async function createTables() {
               id INT AUTO_INCREMENT PRIMARY KEY,
               title VARCHAR(255),
               content TEXT,
+              image_location VARCHAR(255),
               views INT DEFAULT 0,
-              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              image_id VARCHAR(50) UNIQUE
           );
       `);
 
@@ -199,6 +282,15 @@ async function init() {
 
 init().catch(console.error);
 
+app.use((err, req, res, next) => {
+  if (err instanceof multer.MulterError && err.code === 'LIMIT_UNEXPECTED_FILE') {
+    return res.status(400).json({
+      statusCode: 400,
+      message: 'Invalid multipart form data'
+    });
+  }
+  next(err);
+});
 
 app.post('/api/posts', async (req, res) => {
   try {
@@ -210,33 +302,66 @@ app.post('/api/posts', async (req, res) => {
   }
 });
 
-const validatePostBody = (req, res, next) => {
-  if (!req.is('application/json')) {
-    return res.status(400).json({ message: 'Invalid content-type' });
-  }
-  
-  const { title, content } = req.body;
-  if (!title || !content) {
-    return res.status(400).json({ message: 'Title and content are required' });
-  }
-  
-  next();
-};
-
-
-app.use('/api/posts', validatePostBody);
-
-app.get('/api/posts',  validatePostBody, async (req, res) => {
+app.post('/api/upload-image', upload.single('image'), async (req, res) => {
   try {
-    const posts = await getPosts();
-    res.json(posts);
+    const imagePath = `/uploads/${req.file.filename}`;
+
+    res.json({location: imagePath});
   } catch (error) {
-    console.error('Error fetching posts:', error);
-    res.status(500).json({ message: 'Failed to fetch posts' });
+    console.error('Error uploading image:', error);
+    res.status(500).json({ error: 'Failed to upload image' });
   }
 });
 
-app.get('/api/posts/:id',  validatePostBody, async (req, res) => {
+// const validatePostBody = (req, res, next) => {
+//   if (!req.is('application/json')) {
+//     return res.status(400).json({ message: 'Invalid content-type' });
+//   }
+  
+  // const { title, content } = req.body;
+  // if (!title || !content) {
+  //   return res.status(400).json({ message: 'Title and content are required' });
+  // }
+  
+//   next();
+// };
+
+
+
+
+// const validatePostBody = (req, res, next) => {
+//   if (!req.is('application/json')) {
+//     return res.status(400).json({ message: 'Invalid content-type' });
+//   }
+  
+//   const { title, content } = req.body;
+//   if (!title || !content) {
+//     return res.status(400).json({ message: 'Title and content are required' });
+//   }
+  
+//   next();
+// };
+
+
+// app.use('/api/posts', validatePostBody);
+
+app.get('/api/posts', async (req, res) => {
+  try {
+    const posts = await getPosts();
+    
+    if (!posts || posts.length === 0) {
+      res.status(200).json([]);
+    } else {
+      res.json(posts);
+    }
+  } catch (error) {
+    console.error('Error fetching posts:', error);
+    res.status(500).json({ message: 'Internal Server Error', details: error.message });
+  }
+});
+
+
+app.get('/api/posts/:id', async (req, res) => {
   try {
     const post = await getPostById(req.params.id);
     if (!post) return res.status(404).json({ message: 'Post not found' });
@@ -266,6 +391,24 @@ app.get('/api/social-media-links', (req, res) => {
 app.get('/api/site-icons', (req, res) => {
   res.json(siteIcons);
 });
+
+// get uploaded images
+app.get('/api/uploads/:filename', (req, res) => {
+  const { filename } = req.params
+  const filePath = path.join(__dirname, 'uploads', filename
+  );
+  res.sendFile(filePath);
+}
+);
+
+// get all images
+app.get('/api/uploads', (req, res) => {
+  const files = fs.readdirSync(uploadDir  
+  );
+  res.json(files);
+}
+);
+
 
 
 app.put('/api/posts/:id', async (req, res) => {

@@ -12,7 +12,7 @@ import { Link } from 'react-router-dom';
 //Redux import
 import { useFetchRedux } from '../hooks/useFetchRedux.js';
 import { useDispatch } from 'react-redux';
-import { fetchSocialMedia, fetchSiteIcons } from '../store/fetchSlice.js';
+import { fetchSocialMedia, fetchSiteIcons } from '../store/reducer.js';
 
 function NavBar() {
   const { socialMedia, siteIcons } = useFetchRedux();
@@ -41,7 +41,7 @@ function NavBar() {
       <Container fluid>
         <Navbar.Brand >
           <Link to="/">
-          <img src={siteIcons[0].icon} alt={siteIcons[0].name} height={33} width={33}/>
+          <img src={siteIcons[0].icon} alt={siteIcons[0].name} loading='lazy' height={33} width={33}/>
           </Link>
           </Navbar.Brand>
         <Navbar.Brand >

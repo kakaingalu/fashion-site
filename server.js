@@ -1,471 +1,409 @@
 // server.mjs
 import express from 'express';
+import mysql from 'mysql2/promise';
 import cors from 'cors';
-import fs from 'fs/promises';
+import errorHandler from './errorHandler.js';
+// import fs from 'fs';
+import multer from 'multer';
+import path, {dirname} from 'path';
+import { fileURLToPath } from 'url';
+import moment from 'moment';
+import fs from 'fs-extra';
+
+
 
 const app = express();
 const port = 3001;
 
-// read JPEGs   them using fs.promises
-async function loadImage(filePath) {
-  const data = await fs.readFile(filePath);
-  return Buffer.from(data).toString('base64');
+app.use(express.static('public'));
+
+// Increase the request size limit
+app.use(express.json({limit: '50mb'}));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use(express.raw());
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+
+const uploadDir = path.join(__dirname, 'uploads');
+
+// Function to create the upload directory if it doesn't exist
+async function ensureUploadDirectory() {
+  try {
+    await new Promise((resolve, reject) => {
+      fs.access(uploadDir, fs.constants.F_OK, (err) => {
+        if (err) {
+          fs.mkdir(uploadDir, (err) => {
+            if (err) {
+              reject(err);
+            } else {
+              resolve();
+            }
+          });
+        } else {
+          resolve();
+        }
+      });
+    });
+  } catch (error) {
+    console.error('Error creating upload directory:', error);
+    throw error;
+  }
 }
 
-// imports with async functions
-const photo1Base64 = await loadImage('./src/Assets/sample 1.jpeg');
-const photo2Base64 = await loadImage('./src/Assets/sample 2.jpeg');
-const photo3Base64 = await loadImage('./src/Assets/sample 3.jpeg');
-const photo4Base64 = await loadImage('./src/Assets/sample 4.jpeg');
-const photo5Base64 = await loadImage('./src/Assets/sample 5.jpeg');
-const photo6Base64 = await loadImage('./src/Assets/sample 6.jpeg');
-const photo7Base64 = await loadImage('./src/Assets/sample 7.jpeg');
-const photo8Base64 = await loadImage('./src/Assets/sample 8.jpeg');
-const photo9Base64 = await loadImage('./src/Assets/sample 9.jpeg');
+await ensureUploadDirectory();
 
-// social media icons
-const facebook = await loadImage('./src/Assets/facebook-app-symbol.png');
-const instagram = await loadImage('./src/Assets/instagram.png');
-const linkedin = await loadImage('./src/Assets/linkedin.png');
-const pinterest = await loadImage('./src/Assets/pinterest-logo.png');
-const twitter = await loadImage('./src/Assets/twitter.png');
-const youtube = await loadImage('./src/Assets/youtube.png');
+// For file uploads using multer
 
-// other icons
-const siteIcon = await loadImage('./src/Assets/woman.png');
-const list = await loadImage('./src/Assets/list.png')
-const close = await loadImage('./src/Assets/close.png') 
 
-// main data
+// Function to create timestamp without seconds
+function getTimestampWithoutSeconds() {
+  const now = new Date();
+  return moment(now).format('YYYY-MM-DD HH:mm');
+}
+
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: function(req, file, cb) {
+      const uploadDir =  path.join(__dirname, 'public', 'uploads');
+      fs.mkdir(uploadDir, { recursive: true }, (err) => {
+        if (err) {
+          console.error('Error creating upload directory:', err);
+        }
+      });
+      cb(null, uploadDir);
+    },
+    filename: function (req, file, cb) {
+      cb(null, `${getTimestampWithoutSeconds()}-${file.originalname}`);
+    }
+  }),
+  limits: { fileSize: 5 * 1024 * 1024 },
+});
+
+app.use(cors());
+app.use(errorHandler);
+
+
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://localhost:3001'],
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+
+// Server-side configuration (Node.js example using Express)
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  next();
+});
+
+
+// MySQL connection configuration
+const dbConfig = {
+  host: 'localhost',
+  user: 'root',
+  password: '4307',
+  database: 'fashion_db'
+};
+
+// Connect to MySQL
+let pool;
+async function connectToMySQL() {
+  pool = await mysql.createPool(dbConfig);
+
+  // Create the database if it doesn't exist
+  const createDbQuery = `
+    CREATE DATABASE IF NOT EXISTS fashion_db;
+  `;
+  
+  try {
+    await pool.query(createDbQuery);
+    console.log('Database "fashion_db" created successfully');
+  } catch (error) {
+    console.error('Error creating database:', error);
+  }
+}
+
+// Create tables
+async function createTables() {
+  try {
+      await pool.query(`
+          CREATE TABLE IF NOT EXISTS posts (
+              id INT AUTO_INCREMENT PRIMARY KEY,
+              title VARCHAR(255),
+              content TEXT,
+              image_location VARCHAR(255),
+              views INT DEFAULT 0,
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              image_id VARCHAR(50) UNIQUE
+          );
+      `);
+
+      await pool.query(`
+          CREATE TABLE IF NOT EXISTS comments (
+              id INT AUTO_INCREMENT PRIMARY KEY,
+              post_id INT,
+              author VARCHAR(100),
+              content TEXT,
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              FOREIGN KEY (post_id) REFERENCES posts(id)
+          );
+      `);
+
+      await pool.query(`
+          CREATE TABLE IF NOT EXISTS social_media_links (
+              id INT AUTO_INCREMENT PRIMARY KEY,
+              url VARCHAR(255),
+              name VARCHAR(100),
+              icon VARCHAR(255)
+          );
+      `);
+
+      await pool.query(`
+          CREATE TABLE IF NOT EXISTS site_icons (
+              id INT AUTO_INCREMENT PRIMARY KEY,
+              name VARCHAR(100),
+              icon VARCHAR(255)
+          );
+      `);
+
+      console.log("Tables created successfully");
+  } catch (error) {
+      console.error("Error creating tables:", error);
+  }
+}
+
 
 // social media links
 const socialMediaLinks = [
-  { id: 1, url: "https://www.facebook.com", name: "Facebook", icon: `data:image/jpeg;base64,${facebook}` },
-  { id: 2, url: "https://www.twitter.com", name: "Twitter", icon: `data:image/jpeg;base64,${twitter}` },
-  { id: 3, url: "https://www.instagram.com", name: "Instagram", icon: `data:image/jpeg;base64,${instagram}` },
-  { id: 4, url: "https://www.linkedin.com", name: "Linkedin", icon: `data:image/jpeg;base64,${linkedin}` },
-  { id: 5, url: "https://www.pinterest.com", name: "Pinterest", icon: `data:image/jpeg;base64,${pinterest}` },
-  { id: 6, url: "https://www.youtube.com", name: "Youtube", icon: `data:image/jpeg;base64,${youtube}` },
+  { id: 1, url: "https://www.facebook.com", name: "Facebook", icon: "http://localhost:3001/assets/facebook-app-symbol.png" },
+  { id: 2, url: "https://www.twitter.com", name: "Twitter", icon: "http://localhost:3001/assets/twitter.png" },
+  { id: 3, url: "https://www.instagram.com", name: "Instagram", icon: "http://localhost:3001/assets/instagram.png" },
+  { id: 4, url: "https://www.linkedin.com", name: "Linkedin", icon: "http://localhost:3001/assets/linkedin.png" },
+  { id: 5, url: "https://www.pinterest.com", name: "Pinterest", icon: "http://localhost:3001/assets/pinterest-logo.png" },
+  { id: 6, url: "https://www.youtube.com", name: "Youtube", icon: "http://localhost:3001/assets/youtube.png" },
 ] 
 
 // site icons 
 const siteIcons = [
-  { id: 1, name: "Site Icon", icon: `data:image/jpeg;base64,${siteIcon}` },
-  { id: 2, name: "List", icon: `data:image/jpeg;base64,${list}` },
-  { id: 3, name: "Close", icon: `data:image/jpeg;base64,${close}` }
+  { id: 1, name: "Site Icon", icon: "http://localhost:3001/assets/woman.png" },
+  { id: 2, name: "List", icon: "http://localhost:3001/assets/list.png" },
+  { id: 3, name: "Close", icon: "http://localhost:3001/assets/close.png" }
 
 ]
 
+async function createPost(postData) {
+  if (!postData || typeof postData !== 'object') {
+    throw new Error('Invalid post data');
+  }
+  
+  const columns = Object.keys(postData);
+  const placeholders = columns.map(() => '?').join(', ');
+  
+  const query = `INSERT INTO posts (${columns.join(', ')}) VALUES (${placeholders})`;
+  const params = columns.map(column => postData[column]);
+  
+  const [result] = await pool.query(query, params);
+  return { id: result.insertId, ...postData };
+}
 
-// posts
-const posts = [
-  {
-    title: "What is Lorem Ipsum?",
-    content: `
-      Lorem Ipsum is simply dummy 
-      text of the printing and typesetting industry. 
-      Lorem Ipsum has been the industry's standard dummy 
-      text ever since the 1500s, when an unknown printer 
-      took a galley of type and scrambled it to make a type 
-      specimen book. It has survived not only five centuries,
-      but also the leap into electronic typesetting, remaining
-      essentially unchanged. It was popularised in the 1960s 
-      with the release of Letraset sheets containing Lorem 
-      Ipsum passages, and more recently with desktop publishing 
-      software like Aldus PageMaker including versions of Lorem 
-      Ipsum.
-      `,
-    image: `data:image/jpeg;base64,${photo1Base64}`,
-    viewCount: 20,
-    comments: [
-      { id: 1, content: "This is a great post!" },
-      { id: 2, content: "This is a great post!" },
-      { id: 3, content: "This is a great post!" },
-      { id: 4, content: "This is a great post!" },
-      { id: 5, content: "This is a great post!" },
-    ], 
-    author: "John Doe",
-    date: "2021-10-01",
-    category: "Technology",
-    tags: ["lorem", "ipsum", "dolor", "sit", "amet"]
-  },
-  {
-    title: "Why do we use it?",
-    content: `
-      It is a long established fact that a reader will be 
-      distracted by the readable content of a page when looking 
-      at its layout. The point of using Lorem Ipsum is that it 
-      has a more-or-less normal distribution of letters, as 
-      opposed to using 'Content here, content here', making it 
-      look like readable English. Many desktop publishing packages 
-      and web page editors now use Lorem Ipsum as their default model text, 
-      and a search for 'lorem ipsum' will uncover many web sites still in their infancy. 
-      Various versions have evolved over the years, sometimes by accident, sometimes on purpose 
-      (injected humour and the like).
-      `,
-    image: `data:image/jpeg;base64,${photo2Base64}`, 
-    viewCount: 30,
-    comments: [
-      { id: 1, content: "This is a great post!" },
-      { id: 2, content: "This is a great post!" },
-      { id: 3, content: "This is a great post!" },
-      { id: 4, content: "This is a great post!" },
-      { id: 5, content: "This is a great post!" },
-    ],
-    author: "Jane Doe",
-    date: "2021-10-02",
-    category: "Technology",
-    tags: ["lorem", "ipsum", "dolor", "sit", "amet"]
-  },
-  {
-    title: "Where does it come from?",
-    content: `
-      Contrary to popular belief, Lorem Ipsum is not simply random text. 
-      It has roots in a piece of classical Latin literature from 45 BC, making 
-      it over 2000 years old. Richard McClintock, a Latin professor at Hampden-Sydney 
-      College in Virginia, looked up one of the more obscure Latin words, consectetur, 
-      from a Lorem Ipsum passage, and going through the cites of the word in classical 
-      literature, discovered the undoubtable source. Lorem Ipsum comes from sections 
-      1.10.32 and 1.10.33 of "de Finibus Bonorum et Malorum" (The Extremes of Good and Evil) 
-      by Cicero, written in 45 BC. This book is a treatise on the theory of ethics, very 
-      popular during the Renaissance. The first line of Lorem Ipsum, "Lorem ipsum dolor sit amet..",
-      comes from a line in section 1.10.32.
-      `,
-    image: `data:image/jpeg;base64,${photo3Base64}`,
-    viewCount: 40,
-    comments: [
-      { id: 1, content: "This is a great post!" },
-      { id: 2, content: "This is a great post!" },
-      { id: 3, content: "This is a great post!" },
-      { id: 4, content: "This is a great post!" },
-      { id: 5, content: "This is a great post!" },
-    ],
-    author: "John Doe",
-    date: "2021-10-03",
-    category: "Technology",
-    tags: ["lorem", "ipsum", "dolor", "sit", "amet"] 
-  },
-  {
-    title: "Where can I get some?",
-    content: `
-      There are many variations of passages of Lorem Ipsum available, 
-      but the majority have suffered alteration in some form, by injected humour, 
-      or randomised words which don't look even slightly believable. If you are going 
-      to use a passage of Lorem Ipsum, you need to be sure there isn't anything embarrassing 
-      hidden in the middle of text. All the Lorem Ipsum generators on the Internet tend to 
-      repeat predefined chunks as necessary, making this the first true generator on the Internet. 
-      It uses a dictionary of over 200 Latin words, combined with a handful of model sentence structures, 
-      to generate Lorem Ipsum which looks reasonable. The generated Lorem Ipsum is therefore always free 
-      from repetition, injected humour, or non-characteristic words etc.
-      `,
-    image: `data:image/jpeg;base64,${photo4Base64}`, 
-    viewCount: 50,
-    comments: [
-      { id: 1, content: "This is a great post!" },
-      { id: 2, content: "This is a great post!" },
-      { id: 3, content: "This is a great post!" },
-      { id: 4, content: "This is a great post!" },
-      { id: 5, content: "This is a great post!" },
-    ],
-    author: "Jane Doe",
-    date: "2021-10-04",
-    category: "Technology",
-    tags: ["lorem", "ipsum", "dolor", "sit", "amet"] 
-  },
-  {
-    title: "What is Lorem Ipsum?",
-    content: `
-      Lorem Ipsum is simply dummy 
-      text of the printing and typesetting industry. 
-      Lorem Ipsum has been the industry's standard dummy 
-      text ever since the 1500s, when an unknown printer 
-      took a galley of type and scrambled it to make a type 
-      specimen book. It has survived not only five centuries,
-      but also the leap into electronic typesetting, remaining
-      essentially unchanged. It was popularised in the 1960s 
-      with the release of Letraset sheets containing Lorem 
-      Ipsum passages, and more recently with desktop publishing 
-      software like Aldus PageMaker including versions of Lorem 
-      Ipsum.
-      `,
-    image: `data:image/jpeg;base64,${photo5Base64}`,
-    viewCount: 70,
-    comments: [
-      { id: 1, content: "This is a great post!" },
-      { id: 2, content: "This is a great post!" },
-      { id: 3, content: "This is a great post!" },
-      { id: 4, content: "This is a great post!" },
-      { id: 5, content: "This is a great post!" },
-    ],
-    author: "John Doe",
-    date: "2021-10-05",
-    category: "Technology",
-    tags: ["lorem", "ipsum", "dolor", "sit", "amet"] 
-  },
-  {
-    title: "Why do we use it?",
-    content: `
-      It is a long established fact that a reader will be 
-      distracted by the readable content of a page when looking 
-      at its layout. The point of using Lorem Ipsum is that it 
-      has a more-or-less normal distribution of letters, as 
-      opposed to using 'Content here, content here', making it 
-      look like readable English. Many desktop publishing packages 
-      and web page editors now use Lorem Ipsum as their default model text, 
-      and a search for 'lorem ipsum' will uncover many web sites still in their infancy. 
-      Various versions have evolved over the years, sometimes by accident, sometimes on purpose 
-      (injected humour and the like).
-      `,
-    image: `data:image/jpeg;base64,${photo6Base64}`,
-    viewCount: 80,
-    comments: [
-      { id: 1, content: "This is a great post!" },
-      { id: 2, content: "This is a great post!" },
-      { id: 3, content: "This is a great post!" },
-      { id: 4, content: "This is a great post!" },
-      { id: 5, content: "This is a great post!" },
-    ],
-    author: "Jane Doe",
-    date: "2021-10-06",
-    category: "Technology",
-    tags: ["lorem", "ipsum", "dolor", "sit", "amet"] 
-  },
-  {
-    title: "Where does it come from?",
-    content: `
-      Contrary to popular belief, Lorem Ipsum is not simply random text. 
-      It has roots in a piece of classical Latin literature from 45 BC, making 
-      it over 2000 years old. Richard McClintock, a Latin professor at Hampden-Sydney 
-      College in Virginia, looked up one of the more obscure Latin words, consectetur, 
-      from a Lorem Ipsum passage, and going through the cites of the word in classical 
-      literature, discovered the undoubtable source. Lorem Ipsum comes from sections 
-      1.10.32 and 1.10.33 of "de Finibus Bonorum et Malorum" (The Extremes of Good and Evil) 
-      by Cicero, written in 45 BC. This book is a treatise on the theory of ethics, very
-      popular during the Renaissance. The first line of Lorem Ipsum, "Lorem ipsum dolor sit amet..",
-      comes from a line in section 1.10.32.
-      `,
-    image:  `data:image/jpeg;base64,${photo7Base64}`,
-    viewCount: 90,
-    comments: [
-      { id: 1, content: "This is a great post!" },
-      { id: 2, content: "This is a great post!" },
-      { id: 3, content: "This is a great post!" },
-      { id: 4, content: "This is a great post!" },
-      { id: 5, content: "This is a great post!" },
-    ],
-    author: "John Doe",
-    date: "2021-10-07",
-    category: "Technology",
-    tags: ["lorem", "ipsum", "dolor", "sit", "amet"]
-  },
-  {
-    title: "Where can I get some?",
-    content: `
-      There are many variations of passages of Lorem Ipsum available, 
-      but the majority have suffered alteration in some form, by injected humour, 
-      or randomised words which don't look even slightly believable. If you are going 
-      to use a passage of Lorem Ipsum, you need to be sure there isn't anything embarrassing 
-      hidden in the middle of text. All the Lorem Ipsum generators on the Internet tend to 
-      repeat predefined chunks as necessary, making this the first true generator on the Internet. 
-      It uses a dictionary of over 200 Latin words, combined with a handful of model sentence structures, 
-      to generate Lorem Ipsum which looks reasonable. The generated Lorem Ipsum is therefore always free 
-      from repetition, injected humour, or non-characteristic words etc.
-      `,
-    image: `data:image/jpeg;base64,${photo8Base64}`,
-    viewCount: 100,
-    comments: [
-      { id: 1, content: "This is a great post!" },
-      { id: 2, content: "This is a great post!" },
-      { id: 3, content: "This is a great post!" },
-      { id: 4, content: "This is a great post!" },
-      { id: 5, content: "This is a great post!"},
-    ],
-    author: "Jane Doe",
-    date: "2021-10-08",
-    category: "Technology",
-    tags: ["lorem", "ipsum", "dolor", "sit", "amet"]
-  },
-  {
-    title: "What is Lorem Ipsum?",
-    content: `
-      Lorem Ipsum is simply dummy 
-      text of the printing and typesetting industry. 
-      Lorem Ipsum has been the industry's standard dummy 
-      text ever since the 1500s, when an unknown printer 
-      took a galley of type and scrambled it to make a type 
-      specimen book. It has survived not only five centuries,
-      but also the leap into electronic typesetting, remaining
-      essentially unchanged. It was popularised in the 1960s 
-      with the release of Letraset sheets containing Lorem 
-      Ipsum passages, and more recently with desktop publishing 
-      software like Aldus PageMaker including versions of Lorem 
-      Ipsum.
-      `,
-    image: `data:image/jpeg;base64,${photo9Base64}`,
-    viewCount: 120,
-    comments: [
-      { id: 1, content: "This is a great post!" },
-      { id: 2, content: "This is a great post!" },
-      { id: 3, content: "This is a great post!" },
-      { id: 4, content: "This is a great post!" },
-      { id: 5, content: "This is a great post!" },
-    ],
-    author: "John Doe",
-    date: "2021-10-09",
-    category: "Technology",
-    tags: ["lorem", "ipsum", "dolor", "sit", "amet"]
+async function getPosts() {
+  const [rows] = await pool.query('SELECT * FROM posts');
+  return rows;
+}
+
+async function getPostById(postId) {
+  if (!postId || isNaN(postId)) {
+    throw new Error('Invalid post ID');
   }
 
-].sort((a, b) => b.viewCount - a.viewCount);
+  try {
+    const [row] = await pool.query('SELECT * FROM posts WHERE id = ?', [postId]);
+    if (!row) {
+      throw new Error('Post not found');
+    }
+    return row;
+  } catch (error) {
+    console.error('Error fetching post:', error);
+    throw error;
+  }
+}
 
 
+async function updatePost(postData) {
+  await pool.query('UPDATE posts SET ? WHERE id = ?', [postData, postData.id]);
+  return getPostById(postData.id);
+}
 
-app.use(express.json()); // Middleware to parse JSON bodies
-app.use(express.urlencoded({ extended: true }));
-app.use(cors());
+async function deletePost(postId) {
+  if (!postId || isNaN(postId) ) {
+    throw new Error('Invalid post ID');
+  }
+
+  try {
+  await pool.query('DELETE FROM posts WHERE id = ?', [postId]);
+  const deletedPost = await getPostById(postId);
+  return { message: 'Post deleted successfully' };
+  } catch (error) {
+    console.error('Error deleting post:', error);
+    console.log("id:", postId);
+    throw new Error('Failed to delete post');
+  }
+}
+
+// delete image
+async function deleteFile(filename) {
+  const filePath = path.join(__dirname, 'public', 'uploads', filename);
+  
+  try {
+    await fs.remove(filePath);
+    console.log(`File ${filename} deleted successfully`);
+    return { success: true, message: 'File deleted successfully' };
+  } catch (error) {
+    console.error(`Error deleting file ${filename}:`, error);
+    return { success: false, message: 'Failed to delete file' };
+  }
+}
+
+// Initialize the app
+async function init() {
+  await connectToMySQL();
+  await createTables();
+}
+
+init().catch(console.error);
 
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).send('Something broke!');
+  if (err instanceof multer.MulterError && err.code === 'LIMIT_UNEXPECTED_FILE') {
+    return res.status(400).json({
+      statusCode: 400,
+      message: 'Invalid multipart form data'
+    });
+  }
+  next(err);
 });
 
-
-
-app.get('/', (req, res) => {
-  const html = `
-  <!DOCTYPE html>
-  <html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fashion Blog</title>
-    <style>
-      body {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        margin: 0;
-        font-family: Arial, sans-serif;
-      }
-      .message {
-        text-align: center;
-        padding: 20px;
-        background-color: #f0f0f0;
-        border-radius: 5px;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="message">
-      Welcome to the Backend API!
-    </div>
-  </body>
-  </html>
-`;
-  res.send(html);
+app.post('/api/posts', async (req, res) => {
+  try {
+    const newPost = await createPost(req.body);
+    res.status(201).json(newPost);
+  } catch (error) {
+    console.error('Error creating post:', error);
+    res.status(400).json({ message: 'Invalid request body' });
+  }
 });
 
-// Post routes
-app.post('/api/posts', (req, res) => {
-  const newPost = {
-    ...req.body,
-    id: Date.now(),
-    views: 0,
-    comments: []
-  };
-  posts.push(newPost);
-  res.status(201).json(newPost);
-});
+app.post('/api/upload-image', upload.single('image'), async (req, res) => {
+  try {
+    const imagePath = `/public/uploads/${req.file.filename}`;
 
-app.post('/api/comments/:postId', (req, res) => {
-  const postId = parseInt(req.params.postId);
-  const newComment = {
-    id: Date.now(),
-    ...req.body
-  };
-  
-  const postIndex = posts.findIndex(post => post.id === postId);
-  if (postIndex !== -1) {
-    posts[postIndex].comments.push(newComment);
-    res.status(201).json(newComment);
-  } else {
-    res.status(404).json({ message: 'Post not found' });
+    res.json({location: imagePath});
+  } catch (error) {
+    console.error('Error uploading image:', error);
+    res.status(500).json({ error: 'Failed to upload image' });
   }
 });
 
 
-// Get routes
-app.get('/api/posts', (req, res) => {
-  res.json(posts);
-});
-
-app.get('/api/posts/:id', (req, res) => {
-  const postId = parseInt(req.params.id);
-  const post = posts.find(p => p.id === postId);
-  if (!post) return res.status(404).json({ message: 'Post not found' });
-  res.json(post);
-});
-
-app.get('/api/comments/:postId', (req, res) => {
-  const postId = parseInt(req.params.postId);
-  const post = posts.find(p => p.id === postId);
-  if (!post) return res.status(404).json({ message: 'Post not found' });
-  res.json(post.comments);
-});
-
-// Put routes
-app.put('/api/posts/:id', (req, res) => {
-  const postId = parseInt(req.params.id);
-  const index = posts.findIndex(p => p.id === postId);
-  if (index === -1) return res.status(404).json({ message: 'Post not found' });
-
-  const updatedPost = {
-    ...posts[index],
-    ...req.body
-  };
-
-  posts[index] = updatedPost;
-  res.json(updatedPost);
-});
-
-// Delete routes
-app.delete('/api/posts/:id', (req, res) => {
-  const postId = parseInt(req.params.id);
-  const index = posts.findIndex(p => p.id === postId);
-  if (index === -1) return res.status(404).json({ message: 'Post not found' });
-
-  posts.splice(index, 1);
-  res.status(204).send('Post deleted');
-});
-
-app.delete('/api/comments/:postId', (req, res) => {
-  const postId = parseInt(req.params.postId);
-  const postIndex = posts.findIndex(p => p.id === postId);
-  
-  if (postIndex !== -1) {
-    posts[postIndex].comments = posts[postIndex].comments.filter(c => c.id !== parseInt(req.query.commentId));
-    res.status(204).send('Comment deleted');
-  } else {
-    res.status(404).json({ message: 'Post not found' });
+app.get('/api/posts', async (req, res) => {
+  try {
+    const posts = await getPosts();
+    
+    if (!posts || posts.length === 0) {
+      res.status(200).json([]);
+    } else {
+      res.json(posts);
+    }
+  } catch (error) {
+    console.error('Error fetching posts:', error);
+    res.status(500).json({ message: 'Internal Server Error', details: error.message });
   }
 });
 
 
-// Social media links
+app.get('/api/posts/:id', async (req, res) => {
+  try {
+    const post = await getPostById(req.params.id);
+    if (!post) return res.status(404).json({ message: 'Post not found' });
+    res.json(post);
+  } catch (error) {
+    console.error('Error fetching post:', error);
+    res.status(500).json({ message: 'Failed to fetch post' });
+  }
+});
+
+// send social media links
 app.get('/api/social-media-links', (req, res) => {
   res.json(socialMediaLinks);
 });
 
-// Site icons
+// send site icons
 app.get('/api/site-icons', (req, res) => {
   res.json(siteIcons);
 });
 
-app.get('*', (req, res) => {
-  res.status(404).send('Page Not Found');
+// get uploaded images
+app.get('/api/uploads/:filename', (req, res) => {
+  const { filename } = req.params
+  const filePath = path.join(__dirname, 'uploads', filename
+  );
+  res.sendFile(filePath);
+}
+);
+
+// get all images
+app.get('/api/uploads', (req, res) => {
+  const files = fs.readdirSync(uploadDir  
+  );
+  res.json(files);
+}
+);
+
+
+
+app.put('/api/posts/:id', async (req, res) => {
+  try {
+    const updatedPost = await updatePost(req.body);
+    res.json(updatedPost);
+  } catch (error) {
+    console.error('Error updating post:', error);
+    res.status(500).json({ message: 'Failed to update post' });
+  }
 });
 
-app.listen(port, () => {
-  console.log(`Express server running at http://localhost:${port}`);
+app.delete('/api/posts/:id', async (req, res) => {
+  try {
+    const postId = parseInt(req.params.id);
+    if (isNaN(postId)) {
+      return res.status(400).json({ message: 'Invalid post ID' });
+    }
+    const deletedPost = await deletePost(req.params.id);
+    res.json(deletedPost);
+  } catch (error) {
+    console.error('Error deleting post:', error);
+    console.log("id:", req.params.id);
+    res.status(500).json({ message: 'Failed to delete post' });
+  }
 });
+
+// delete image
+app.delete('/api/delete-image/:filename', async (req, res) => {
+    try {
+    const result = await deleteFile(req.params.filename);
+    res.json(result);
+    res.json({ message: 'Image deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting image:', error);
+    res.status(500).json({ message: 'Failed to delete image' });
+  }
+});
+
+
+app.listen(port, () => {
+  console.log(`Server listening at http://localhost:${port}`);
+});
+
+export { app }; 

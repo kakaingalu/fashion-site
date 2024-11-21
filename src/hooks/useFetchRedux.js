@@ -3,7 +3,7 @@ import { useMemo, useCallback } from 'react';
 
 // src/hooks/useFetchRedux.js
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchSocialMedia, fetchPosts, fetchSiteIcons } from '../store/fetchSlice.js';
+import { fetchSocialMedia, fetchPosts, fetchSiteIcons } from '../store/reducer.js';
 import { createSelector } from '@reduxjs/toolkit';
 
 const selectFetchData = createSelector(
@@ -40,4 +40,3 @@ export function useFetchRedux() {
     fetchAll,
   }), [socialMedia, posts, siteIcons, loading, errors, fetchAll]);
 }
-

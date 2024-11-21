@@ -1,6 +1,7 @@
 // PostDetails.js
 import React, {useLayoutEffect} from 'react';
 import { useParams, useLocation, Link } from 'react-router-dom';
+import Image from 'react-image-gallery';
 
 // import components
 import NavBar from './NavBar.js';
@@ -24,7 +25,8 @@ const PostDetails = () => {
   const post = posts[parseInt(id)];
   const location = useLocation();
   
-
+  console.log('id:', id);
+  console.log('posts:', post);
   useLayoutEffect(() => {
     // Scroll to top when route changes
     window.scrollTo(0, 0);
@@ -34,7 +36,17 @@ const PostDetails = () => {
   if (!post) {
     return <h1>Post not found</h1>; 
   }
-
+  const comments = [
+    {
+     content: 'This is a comment',
+    },
+    {
+     content: 'This is another comment',
+    },
+    {
+     content: 'This is a third comment',
+    }, 
+  ]
   
 
   return (
@@ -57,9 +69,9 @@ const PostDetails = () => {
           <Card className='mt-4'>
             <Card.Header className='fw-bold text-center fs-3'>{post.title}</Card.Header>
             <Card.Body className='p-2'>
-              <img src={post.image} alt={`${post.title}`} className='w-100 rounded' />
+              <img src={post.images} alt={`${post.title}`} className='w-100 rounded' />
               <br />
-              <Card.Text >{post.date}</Card.Text>
+              <Card.Text >{post.created_at}</Card.Text>
               <Card.Text >{post.author}</Card.Text>
               <Card.Text >{post.category}</Card.Text>
               <Card.Text >{post.tags}</Card.Text>
@@ -76,7 +88,7 @@ const PostDetails = () => {
               <Card >
                 <Card.Header className='fw-bold text-center fs-3'>CommentList</Card.Header>
                 <Card.Body>
-                  <CommentList comments={post.comments} />
+                  <CommentList comments={comments} />
                 </Card.Body>
               </Card>
             </Col>
