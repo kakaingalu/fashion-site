@@ -6,7 +6,7 @@ import { Container, Row, Col, Button, Form, Alert, Card } from 'react-bootstrap'
 
 // Redux imports
 import { useDispatch } from 'react-redux';
-import { fetchPosts, deletePost, fetchSocialMedia, fetchSiteIcons } from '../store/reducer.js';
+import { fetchPosts, deletePost, fetchSocialMedia, fetchSiteIcons, deleteImage} from '../store/reducer.js';
 import { useFetchRedux } from '../hooks/useFetchRedux.js';
 
 // Moment.js import
@@ -15,14 +15,17 @@ import moment from 'moment';
 // module imports
 import Footer from './Footer.js';
 import ToastStack from './ToastStack.js';
-import FullScreenModal from './FullScreenModal.js';
+import FullScreenCreateModal from './FullScreenCreateModal.js';
+import FullScreenEditModal from './FullScreenEditModal.js';
 import NavBar from './NavBar.js';
 
 
 function UserPage() {
   const [successMessage, setSuccessMessage] = useState(false);
   const [errorMessage, setErrorMessage] = useState(false);
-  const [showModal, setShowModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editId, setEditId] = useState(null);
   const dispatch = useDispatch();
 
    const { posts} = useFetchRedux();
@@ -39,19 +42,10 @@ function UserPage() {
       });
     }, [dispatch]);
 
-
-
-  
-
-  // const handleImageRemove = (index) => {
-  //   setUploadedImages(prevImages =>
-  //     prevImages.filter((_, i) => i !== index)
-  //   );
-  // };
-
   const handleDeletePost = async (id) => {
     try {
       await dispatch(deletePost(id));
+      await dispatch(deleteImage(id));
       setSuccessMessage('Post deleted successfully!');
 
       const updatedPosts = await dispatch(fetchPosts());
@@ -63,13 +57,6 @@ function UserPage() {
       setErrorMessage('Failed to delete post. Please try again.');
     }
   };
-
-  // // truncate text
-  // const truncateText = (text, maxLength = 150) => {
-  //   if (!text) return '';
-  //   if (text.length <= maxLength) return text;
-  //   return `${text.substring(0, maxLength)}...`;
-  // };
 
   const truncateText = (content, maxLength = 140) => {
     if (!content || content.length <= maxLength) {
@@ -84,7 +71,14 @@ function UserPage() {
   console.log('content:', posts.content);
   console.log('post:', posts);
 
-  const handleOpen = () => setShowModal(true);
+  // open create modal
+  const handleOpenCreatemodal = () => setShowCreateModal(true);
+
+  // open edit modal
+  const handleOpenEditmodal = (id) => {
+    setEditId(id);
+    setShowEditModal(true);
+  }
   
   return (
     <Container>
@@ -101,7 +95,7 @@ function UserPage() {
             No posts available. Create a new post to get started!
           </Alert>
           <div className="d-flex justify-content-center w-100">
-            <Button variant="dark" className='mx-auto' onClick={handleOpen}>Create Post</Button>
+            <Button variant="dark" className='mx-auto' onClick={handleOpenCreatemodal}>Create Post</Button>
           </div>
         </div>
       )}
@@ -120,8 +114,8 @@ function UserPage() {
                           </Card.Body>
                           <div className='p-2'>
                             <div className="d-flex justify-content-between">
-                              <Button variant="danger" size="sm" onClick={() => handleDeletePost(post.id)}>Delete</Button>
-                              <Button variant="primary" size="sm">Edit</Button>
+                              <Button variant="dark" size="sm" onClick={() => handleDeletePost(post.id)}>Delete</Button>
+                              <Button variant="dark" size="sm" onClick={() => handleOpenEditmodal(post.id)}>Edit</Button>
                             </div>
                           </div>
                         </Card>
@@ -135,18 +129,26 @@ function UserPage() {
               {/* Add post button */}
               {posts.length > 0 && (
               <div className="d-flex justify-content-center position-fixed bottom-0 me-3 mb-3 end-0 pb-5">
-                <Button variant="dark" className='mx-auto' onClick={handleOpen}>Create Post</Button>
+                <Button variant="dark" className='mx-auto' onClick={handleOpenCreatemodal}>Create Post</Button>
               </div>
             )}
 
       {/* Create new post section */}
-      <FullScreenModal
-        show={showModal}
-        handleClose={() => setShowModal(false)}
+      <FullScreenCreateModal
+        show={showCreateModal}
+        handleClose={() => setShowCreateModal(false)}
         setErrorMessage={setErrorMessage}
         setSuccessMessage={setSuccessMessage}
       />
 
+      {/* Edit post section */}
+      <FullScreenEditModal
+        show={showEditModal}
+        handleClose={() => setShowEditModal(false)}
+        setErrorMessage={setErrorMessage}
+        setSuccessMessage={setSuccessMessage}
+        editId={editId} 
+      />
       
       
 

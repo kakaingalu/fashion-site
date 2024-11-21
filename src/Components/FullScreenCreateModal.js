@@ -10,7 +10,7 @@ import { useDispatch } from 'react-redux';
 // Moment.js import
 import moment from 'moment';
 
-function FullScreenModal({ show, handleClose, setErrorMessage, setSuccessMessage }) {
+function FullScreenCreateModal({ show, handleClose, setErrorMessage, setSuccessMessage }) {
     const [articleTitle, setArticleTitle] = useState('');
     const [uploadedImages, setUploadedImages] = useState([]);
     const [imageName, setImageName] = useState('');
@@ -114,7 +114,7 @@ function FullScreenModal({ show, handleClose, setErrorMessage, setSuccessMessage
             />
             <p>Selected images: {uploadedImages.length}</p>
           </div>
-          <button type="submit" className="btn btn-primary">
+          <button type="submit" className="btn btn-dark">
             Submit
           </button>
         </form>
@@ -123,4 +123,4 @@ function FullScreenModal({ show, handleClose, setErrorMessage, setSuccessMessage
   );
 }
 
-export default FullScreenModal;
+export default FullScreenCreateModal;

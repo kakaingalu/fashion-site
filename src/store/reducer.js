@@ -127,6 +127,48 @@ export const deletePost = createAsyncThunk(
   }
 );
 
+// delete image
+export const deleteImage = createAsyncThunk(
+  'fetch/deleteImage',
+  async (id, thunkAPI) => {
+    try {
+      const instance = axios.create({
+        baseURL: 'http://localhost:3001',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      const response = await instance.delete(`/api/posts/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      throw error;
+    }
+  }
+);
+
+// edit post
+export const editPost = createAsyncThunk(
+  'fetch/editPost',
+  async (postData, thunkAPI) => {
+    try {
+      const instance = axios.create({
+        baseURL: 'http://localhost:3001',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      const response = await instance.put(`/api/posts/`, postData);
+      return response.data;
+    } catch (error) {
+      console.error('Error editing post:', error);
+      throw error;
+    }
+  }
+);
+
+
+
 const fetchSlice = createSlice({
   name: 'fetch',
   initialState: {
@@ -207,6 +249,32 @@ const fetchSlice = createSlice({
       })
       .addCase( deletePost.rejected, (state, action) => {
         console.error('Error deleting post:', action.error.message);
+        state.error = action.error.message;
+        state.status = 'failed';
+      })
+      .addCase( deleteImage.pending, (state) => {
+        state.status = 'loading';
+      })
+      .addCase( deleteImage.fulfilled, (state, action) => {
+        console.log(action.payload);
+        state.posts = state.posts.filter(post => post.id !== action.payload.id);
+        state.status = 'succeeded';
+      })
+      .addCase( deleteImage.rejected, (state, action) => {
+        console.error('Error deleting image:', action.error.message);
+        state.error = action.error.message;
+        state.status = 'failed';
+      })
+      .addCase( editPost.pending, (state) => {
+        state.status = 'loading';
+      })
+      .addCase( editPost.fulfilled, (state, action) => {
+        console.log(action.payload);
+        state.posts = state.posts.filter(post => post.id !== action.payload.id);
+        state.status = 'succeeded';
+      })
+      .addCase( editPost.rejected, (state, action) => {
+        console.error('Error editing post:', action.error.message);
         state.error = action.error.message;
         state.status = 'failed';
       });

@@ -3,11 +3,12 @@ import express from 'express';
 import mysql from 'mysql2/promise';
 import cors from 'cors';
 import errorHandler from './errorHandler.js';
-import fs from 'fs';
+// import fs from 'fs';
 import multer from 'multer';
 import path, {dirname} from 'path';
 import { fileURLToPath } from 'url';
 import moment from 'moment';
+import fs from 'fs-extra';
 
 
 
@@ -80,8 +81,6 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 },
 });
 
-// app.use(express.json()); // Middleware to parse JSON bodies
-// app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 app.use(errorHandler);
 
@@ -217,7 +216,7 @@ async function getPosts() {
 }
 
 async function getPostById(postId) {
-  if (!postId || typeof postId !== 'number') {
+  if (!postId || isNaN(postId)) {
     throw new Error('Invalid post ID');
   }
 
@@ -234,9 +233,9 @@ async function getPostById(postId) {
 }
 
 
-async function updatePost(postId, postData) {
-  await pool.query('UPDATE posts SET ? WHERE id = ?', [postData, postId]);
-  return getPostById(postId);
+async function updatePost(postData) {
+  await pool.query('UPDATE posts SET ? WHERE id = ?', [postData, postData.id]);
+  return getPostById(postData.id);
 }
 
 async function deletePost(postId) {
@@ -252,6 +251,20 @@ async function deletePost(postId) {
     console.error('Error deleting post:', error);
     console.log("id:", postId);
     throw new Error('Failed to delete post');
+  }
+}
+
+// delete image
+async function deleteFile(filename) {
+  const filePath = path.join(__dirname, 'public', 'uploads', filename);
+  
+  try {
+    await fs.remove(filePath);
+    console.log(`File ${filename} deleted successfully`);
+    return { success: true, message: 'File deleted successfully' };
+  } catch (error) {
+    console.error(`Error deleting file ${filename}:`, error);
+    return { success: false, message: 'Failed to delete file' };
   }
 }
 
@@ -353,7 +366,7 @@ app.get('/api/uploads', (req, res) => {
 
 app.put('/api/posts/:id', async (req, res) => {
   try {
-    const updatedPost = await updatePost(req.params.id, req.body);
+    const updatedPost = await updatePost(req.body);
     res.json(updatedPost);
   } catch (error) {
     console.error('Error updating post:', error);
@@ -375,6 +388,19 @@ app.delete('/api/posts/:id', async (req, res) => {
     res.status(500).json({ message: 'Failed to delete post' });
   }
 });
+
+// delete image
+app.delete('/api/delete-image/:filename', async (req, res) => {
+    try {
+    const result = await deleteFile(req.params.filename);
+    res.json(result);
+    res.json({ message: 'Image deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting image:', error);
+    res.status(500).json({ message: 'Failed to delete image' });
+  }
+});
+
 
 app.listen(port, () => {
   console.log(`Server listening at http://localhost:${port}`);

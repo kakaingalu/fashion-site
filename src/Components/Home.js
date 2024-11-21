@@ -55,7 +55,7 @@ function Home() {
 }, [location]);
 
   // site check for loading data
-  if (loading || !socialMedia.length || !Object.keys(siteIcons).length ) {
+  if (loading  ) {
     return (
       <>
         <div className="d-flex justify-content-center align-items-center min-vh-100 bg-light flex-wrap">
@@ -68,10 +68,18 @@ function Home() {
     );
   }
 
+  if (!socialMedia.length || !Object.keys(siteIcons).length) {
+    return (
+      <div className="d-flex justify-content-center align-items-center min-vh-100 bg-danger text-white">
+        <div className="fs-4 fw-bold">{`No internet connection`}</div>
+      </div>
+    );
+  }
+
   if (errors) {
     return (
       <div className="d-flex justify-content-center align-items-center min-vh-100 bg-danger text-white">
-        <div className="fs-4 fw-bold">{`No internet connection found:${errors}`}</div>
+        <div className="fs-4 fw-bold">{`No internet connection:${errors}`}</div>
       </div>
     );
   }
