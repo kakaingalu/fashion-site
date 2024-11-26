@@ -7,7 +7,7 @@ import axios from 'axios';
 export const fetchSocialMedia = createAsyncThunk(
   'fetch/socialMedia',
   async () => {
-    const response = await axios.get('http://localhost:3001/api/social-media-links');
+    const response = await axios.get('https://localhost:3001/api/social-media-links');
     return response.data;
   }
 );
@@ -15,7 +15,7 @@ export const fetchSocialMedia = createAsyncThunk(
 export const fetchPosts = createAsyncThunk(
   'fetch/posts',
   async () => {
-    const response = await axios.get('http://localhost:3001/api/posts');
+    const response = await axios.get('https://localhost:3001/api/posts');
     return response.data;
   }
 );
@@ -23,7 +23,7 @@ export const fetchPosts = createAsyncThunk(
 export const fetchSiteIcons = createAsyncThunk(
   'fetch/siteIcons',
   async () => {
-    const response = await axios.get('http://localhost:3001/api/site-icons');
+    const response = await axios.get('https://localhost:3001/api/site-icons');
     return response.data;
   }
 );
