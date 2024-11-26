@@ -15,13 +15,17 @@ import Footer from './Footer.js';
 //Redux import
 import { useFetchRedux } from '../hooks/useFetchRedux.js';
 import { useDispatch } from 'react-redux';
-import { fetchSocialMedia, fetchPosts, fetchSiteIcons } from '../store/fetchSlice.js';
+import { fetchSocialMedia, fetchPosts, fetchSiteIcons } from '../store/reducer.js';
 
 //Bootstrap import
 import {Container} from 'react-bootstrap';
 import {Row} from 'react-bootstrap';
 import {Col} from 'react-bootstrap';
 import {Spinner} from 'react-bootstrap';
+import {Alert} from 'react-bootstrap';
+
+
+
 
 
 
@@ -30,15 +34,19 @@ function Home() {
   const location = useLocation();
   const { posts, socialMedia, siteIcons, loading, errors} = useFetchRedux();
   const dispatch = useDispatch();
-
   useEffect(() => {
-    dispatch(fetchSocialMedia());
-    dispatch(fetchPosts());
-    dispatch(fetchSiteIcons());
+    const fetchData = async () => {
+      await dispatch(fetchSocialMedia());
+      await dispatch(fetchPosts());
+      await dispatch(fetchSiteIcons());
+    };
+  
+    fetchData().catch(error => {
+      console.error('Error fetching data:', error);
+    });
   }, [dispatch]);
 
-  
-console.log(siteIcons[0]);
+
   useLayoutEffect(() => {
    // Scroll to top when route changes and returning to home page
    if (location.pathname === '/') {
@@ -47,39 +55,37 @@ console.log(siteIcons[0]);
 }, [location]);
 
   // site check for loading data
-  if (loading) {
+  if (loading  ) {
     return (
       <>
         <div className="d-flex justify-content-center align-items-center min-vh-100 bg-light flex-wrap">
             <Spinner animation="border" role="status">
               <span className="visually-hidden">Loading...</span>
             </Spinner>
-            <div className="ms-2">Loading...</div>
+            <div className="ms-2">Loading...Please Wait</div>
         </div>
       </>
     );
   }
 
   if (!socialMedia.length || !Object.keys(siteIcons).length) {
-    return  <>
-      <div className="d-flex justify-content-center align-items-center min-vh-100 bg-light flex-wrap">
-          <Spinner animation="border" role="status">
-            <span className="visually-hidden">Loading...</span>
-          </Spinner>
-          <div className="ms-2">Loading...Please Wait</div>
+    return (
+      <div className="d-flex justify-content-center align-items-center min-vh-100 bg-danger text-white">
+        <div className="fs-4 fw-bold">{`No internet connection`}</div>
       </div>
-    </>
+    );
   }
 
   if (errors) {
     return (
       <div className="d-flex justify-content-center align-items-center min-vh-100 bg-danger text-white">
-        <div className="fs-4 fw-bold">{errors}</div>
+        <div className="fs-4 fw-bold">{`No internet connection:${errors}`}</div>
       </div>
     );
   }
 
-  
+
+
     return (
       <>
       <div>
@@ -92,27 +98,36 @@ console.log(siteIcons[0]);
         {/*body*/}
         {/* Sidebar */}
          {/* Post List Sidebar */}
-         <Col xs={12} md={3} className="d-none d-md-block">
+         <Col xs={12} md={2} className="d-none d-md-block">
           <OffCanvas posts={posts}/>
           </Col>  
 
           <div className="container-fluid">
             <Row>
               {/* Sidebar */}
-              <Col xs={12} md={3} className="d-none d-md-block">
+              {/* <Col xs={12} md={3} className="d-none d-md-block">
                 <SideBar posts={posts} />
-              </Col>
+              </Col> */}
+
               {/* Main Content */}
-              <Col xs={12} md={9} className="ps-md-5">
-                <Container fluid>
-                  <Row xs={1} md={2} lg={3}>
+              {/* Check if posts exist */}
+              {posts.length === 0 && (
+                <div className="container mt-5 pt-5 mx-auto">
+                  <div className="d-flex justify-content-center w-100">
+                  <Alert variant="" className="fw-bold text-center">
+                    No posts Available
+                  </Alert>
+                  </div>
+                </div>
+              )}
+              <Col xs={10} md={12} className="ps-md-5 h-100 custom-no-padding">
+                <Container className='d-flex h-100 p-0 m-0' fluid>
+                  <Row xs={1} md={3} lg={3} className='flex-grow-1 overflow-y-auto m-5 p-0'>
                     {posts.map((post, index) => (
-                      <Col key={index}>
+                      <Col className='' key={index}>
                         <Link className='text-decoration-none text-reset'  preventScrollReset={true} to={`/posts/${index}`}>
                         <Post 
-                          title={post.title} 
-                          content={post.content} 
-                          image={post.image}
+                          post={post}
                           index={index}
                         />
                         </Link>

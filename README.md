@@ -1,3 +1,5 @@
 # Fashion Site
-# fashion-site
-# fashion-site
+
+It has no functionality but just viewing fake data but with good UI
+Ui adjustment good
+

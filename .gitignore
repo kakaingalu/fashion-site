@@ -1,1 +1,10 @@
 node_modules
+
+# Node.js
+/node_modules
+.env
+# Build output
+/build
+# Misc
+.DS_Store
+
