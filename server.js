@@ -1,4 +1,7 @@
 // server.mjs
+// import dotenv
+import dotenv from 'dotenv';
+
 import express from 'express';
 import mysql from 'mysql2/promise';
 import cors from 'cors';
@@ -11,9 +14,10 @@ import moment from 'moment';
 import fs from 'fs-extra';
 
 
+dotenv.config();
 
 const app = express();
-const port = 3001;
+const port = process.env.PORT || 3001;
 
 
 
@@ -28,7 +32,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 
-const uploadDir = path.join(__dirname, 'uploads');
+const uploadDir = path.join(__dirname, 'public', 'uploads');
 
 // Function to create the upload directory if it doesn't exist
 async function ensureUploadDirectory() {
@@ -88,7 +92,7 @@ app.use(errorHandler);
 
 
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001'],
+  origin: ['http://localhost:3000', 'http://localhost:3001', 'https://fashion-site-04h0.onrender.com/'],
   methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
@@ -105,10 +109,11 @@ app.use((req, res, next) => {
 
 // MySQL connection configuration
 const dbConfig = {
-  host: 'localhost',
-  user: 'root',
-  password: '4307',
-  database: 'fashion_db'
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database:  process.env.DB_NAME,
+  port: process.env.DB_PORT || 3306,
 };
 
 // Connect to MySQL
@@ -118,14 +123,16 @@ async function connectToMySQL() {
 
   // Create the database if it doesn't exist
   const createDbQuery = `
-    CREATE DATABASE IF NOT EXISTS fashion_db;
+    CREATE DATABASE IF NOT EXISTS ${process.env.DB_NAME};
   `;
   
   try {
     await pool.query(createDbQuery);
-    console.log('Database "fashion_db" created successfully');
+    console.log(`Database ${process.env.DB_NAME} created successfully`);
   } catch (error) {
     console.error('Error creating database:', error);
+    // console.log('Environment variables:', process.env);
+
   }
 }
 
@@ -414,8 +421,11 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'build/index.html'));
 });
 
+//PUBLIC IP
+const PUBLIC_IP = process.env.PUBLIC_IP || '0.0.0.0';
+
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
+app.listen(PORT, PUBLIC_IP, () => {
   console.log(`Server running on port ${PORT}`);
 });
 
