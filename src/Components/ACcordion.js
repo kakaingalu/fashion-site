@@ -28,7 +28,7 @@ const PostAccordion = ({posts}) => {
           <Accordion.Header>{`${index + 1} . ${post.title}`}</Accordion.Header>
           <Accordion.Body>
             <Link className='text-decoration-none text-reset' to={`/posts/${index}`}>
-              {post.images && <img src={post.images} alt={`${post.title}`} className='img-fluid mb-2' />}
+              {post.image_location && <img src={post.image_location} alt={`${post.title}`} className='img-fluid mb-2' />}
               <div dangerouslySetInnerHTML={{ __html: truncateText(post.content, 50) }} />
             </Link>
           </Accordion.Body>

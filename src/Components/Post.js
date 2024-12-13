@@ -26,7 +26,7 @@ const Post = ({ post, index }) => {
     <Card className="mb-4">
       <Card.Header className='fw-bold text-center'>{post.title}</Card.Header>
       <Card.Body style={{ maxHeight: '1000px', overflow: 'hidden' }}>
-        <Card.Img variant="top" alt={`Image for ${post.title}`}  src={post.images} fluid style={{ height: '400px' }} />
+        <Card.Img variant="top" alt={`Image for ${post.title}`}  src={post.image_location} fluid style={{ height: '400px' }} />
         <Card.Text >{truncatedContent}</Card.Text>
       </Card.Body>
     </Card>

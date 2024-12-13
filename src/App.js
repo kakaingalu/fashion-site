@@ -18,7 +18,6 @@ import UserPage from './Components/UserPage.js';
 
 function App() {
   
-
   return (
     <Provider store={store}>
       <FetchProvider>

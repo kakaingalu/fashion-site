@@ -69,7 +69,7 @@ const PostDetails = () => {
           <Card className='mt-4'>
             <Card.Header className='fw-bold text-center fs-3'>{post.title}</Card.Header>
             <Card.Body className='p-2'>
-              <img src={post.images} alt={`${post.title}`} className='w-100 rounded' />
+              <img src={post.image_location} alt={`${post.title}`} className='w-100 rounded' />
               <br />
               <Card.Text >{post.created_at}</Card.Text>
               <Card.Text >{post.author}</Card.Text>

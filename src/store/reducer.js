@@ -9,7 +9,8 @@ export const fetchSocialMedia = createAsyncThunk(
   async (_, thunkAPI) => {
     try {
       const instance = axios.create({
-        baseURL: 'http://localhost:3001',
+        baseURL: 'http://143.198.152.80:3001',
+        'Access-Control-Allow-Origin': '*',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -29,11 +30,11 @@ export const fetchPosts = createAsyncThunk(
   async (_, thunkAPI) => {
     try {
       const instance = axios.create({
-        baseURL: 'http://localhost:3001',
+        baseURL: 'http://143.198.152.80:3001',
+        'Access-Control-Allow-Origin': '*',
         headers: {
           'Content-Type': 'application/json',
         },
-        
       });
       const response = await instance.get('/api/posts');
       return response.data;
@@ -49,11 +50,11 @@ export const fetchSiteIcons = createAsyncThunk(
   async (_, thunkAPI) => {
     try {
       const instance = axios.create({
-        baseURL: 'http://localhost:3001',
+        baseURL: 'http://143.198.152.80:3001',
+        'Access-Control-Allow-Origin': '*',
         headers: {
           'Content-Type': 'application/json',
         },
-        
       });
       const response = await instance.get('/api/site-icons');
       return response.data;
@@ -69,7 +70,8 @@ export const addPost = createAsyncThunk(
   async (postData, thunkAPI) => {
     try {
       const instance = axios.create({
-        baseURL: 'http://localhost:3001',
+        baseURL: 'http://143.198.152.80:3001',
+        'Access-Control-Allow-Origin': '*',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -89,8 +91,8 @@ export const imageUpload = createAsyncThunk(
   async (formData, thunkAPI) => {
     try {
       const instance = axios.create({
-        baseURL: 'http://localhost:3001',
-
+        baseURL: 'http://143.198.152.80:3001',
+        credentials: true
       });
       const response = await instance.post('/api/upload-image', formData);
       return response.data;
@@ -106,11 +108,11 @@ export const deletePost = createAsyncThunk(
   async (id, thunkAPI) => {
     try {
       const instance = axios.create({
-        baseURL: 'http://localhost:3001',
+        baseURL: 'http://143.198.152.80:3001',
+        'Access-Control-Allow-Origin': '*',
         headers: {
           'Content-Type': 'application/json',
         },
-
       });
       const response = await instance.delete(`/api/posts/${id}`);
 
@@ -133,7 +135,8 @@ export const deleteImage = createAsyncThunk(
   async (id, thunkAPI) => {
     try {
       const instance = axios.create({
-        baseURL: 'http://localhost:3001',
+        baseURL: 'http://143.198.152.80:3001',
+        'Access-Control-Allow-Origin': '*',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -153,7 +156,8 @@ export const editPost = createAsyncThunk(
   async (postData, thunkAPI) => {
     try {
       const instance = axios.create({
-        baseURL: 'http://localhost:3001',
+        baseURL: 'http://143.198.152.80:3001',
+        'Access-Control-Allow-Origin': '*',
         headers: {
           'Content-Type': 'application/json',
         },

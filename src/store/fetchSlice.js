@@ -4,10 +4,18 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 // axios import
 import axios from 'axios';
 
+const axiosInstance = axios.create({
+  baseURL: 'http://143.198.152.80:3001',
+  headers: {
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': '*',
+  },
+});
+
 export const fetchSocialMedia = createAsyncThunk(
   'fetch/socialMedia',
   async () => {
-    const response = await axios.get('https://localhost:3001/api/social-media-links');
+    const response = await axiosInstance.get('http://143.198.152.80:3001/api/social-media-links');
     return response.data;
   }
 );
@@ -15,7 +23,7 @@ export const fetchSocialMedia = createAsyncThunk(
 export const fetchPosts = createAsyncThunk(
   'fetch/posts',
   async () => {
-    const response = await axios.get('https://localhost:3001/api/posts');
+    const response = await axiosInstance.get('https://143.198.152.80:3001/api/posts');
     return response.data;
   }
 );
@@ -23,7 +31,7 @@ export const fetchPosts = createAsyncThunk(
 export const fetchSiteIcons = createAsyncThunk(
   'fetch/siteIcons',
   async () => {
-    const response = await axios.get('https://localhost:3001/api/site-icons');
+    const response = await axiosInstance.get('http://143.198.152.80:3001/api/site-icons');
     return response.data;
   }
 );

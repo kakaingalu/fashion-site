@@ -16,6 +16,7 @@ import fs from 'fs-extra';
 
 dotenv.config();
 
+
 const app = express();
 const port = process.env.PORT || 3001;
 
@@ -92,7 +93,7 @@ app.use(errorHandler);
 
 
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001', 'https://fashion-site-04h0.onrender.com/'],
+  origin: ['http://localhost:3000', 'http://localhost:3001', 'http://143.198.152.80:3000/' , 'http://143.198.152.80:3001/'],
   methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));

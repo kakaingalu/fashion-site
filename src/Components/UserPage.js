@@ -27,36 +27,30 @@ function UserPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editId, setEditId] = useState(null);
   const dispatch = useDispatch();
+  const { posts} = useFetchRedux();
+ 
 
-   const { posts} = useFetchRedux();
+  useEffect(() => {
+    const fetchData = async () => { 
+      await dispatch(fetchSocialMedia());
+      await dispatch(fetchPosts());
+      await dispatch(fetchSiteIcons());
+    };
+  
+    fetchData().catch(error => {
+      console.error('Error fetching data:', error);
+    });
+  }, [dispatch]);
 
-    useEffect(() => {
-      const fetchData = async () => { 
-        await dispatch(fetchSocialMedia());
-        await dispatch(fetchPosts());
-        await dispatch(fetchSiteIcons());
-      };
-    
-      fetchData().catch(error => {
-        console.error('Error fetching data:', error);
-      });
-    }, [dispatch]);
-
-    if (errorMessage === 'No post found with the given ID') {
-      setErrorMessage(false);
-    }
-    
+  if (errorMessage === 'No post found with the given ID') {
+    setErrorMessage(false);
+  }
 
   const handleDeletePost = async (id) => {
     try {
       await dispatch(deletePost(id));
       await dispatch(deleteImage(id));
       setSuccessMessage('Post deleted successfully!');
-
-      const updatedPosts = await dispatch(fetchPosts());
-
-      console.log('id:', id);
-      // setPosts(updatedPosts);
     } catch (error) {
       console.error('Error deleting post:', error);
       setErrorMessage('Failed to delete post. Please try again.');
@@ -71,10 +65,6 @@ function UserPage() {
     const truncatedContent = content.substring(0, maxLength - 3);
     return `${truncatedContent}...`;
   };
-  
-  // const truncatedContent = posts?.content ? truncateText(posts.content) : '';
-  console.log('content:', posts.content);
-  console.log('post:', posts);
 
   // open create modal
   const handleOpenCreatemodal = () => setShowCreateModal(true);
@@ -85,6 +75,7 @@ function UserPage() {
     setShowEditModal(true);
   }
 
+  console.log('posts:', posts)
   return (
     <Container>
       
@@ -114,7 +105,7 @@ function UserPage() {
                         <Card className="mb-4">
                           <Card.Header className='fw-bold text-center'>{post.title}</Card.Header>
                           <Card.Body style={{ maxHeight: '1000px', overflow: 'hidden' }}>
-                            <Card.Img variant="top" alt={`Image for ${post.title}`}  src={post.images} fluid style={{ height: '400px' }} />
+                            <Card.Img variant="top" alt={`Image for ${post.title}`}  src={post.image_location} fluid style={{ height: '400px' }} />
                             <Card.Text >{truncateText(post.content)}</Card.Text>
                           </Card.Body>
                           <div className='p-2'>

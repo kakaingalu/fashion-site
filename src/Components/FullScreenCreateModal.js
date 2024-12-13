@@ -15,7 +15,6 @@ import moment from 'moment';
 
 function FullScreenCreateModal({ show, handleClose, setErrorMessage, setSuccessMessage }) {
     const [articleTitle, setArticleTitle] = useState('');
-    const [uploadedImages, setUploadedImages] = useState([]);
     const [imageName, setImageName] = useState('');
     const [articleContent, setArticleContent] = useState('');
     const [file, setFile] = useState(null);
@@ -46,42 +45,39 @@ function FullScreenCreateModal({ show, handleClose, setErrorMessage, setSuccessM
     console.log('Attempting to dispatch addPostAction with:', {
       title: articleTitle,
       content: articleContent,
-      images: `http://localhost:3001/uploads/${getTimestampWithoutSeconds()}-${imageName}`,
-      uploadedImages: uploadedImages
+      image_location: `http://143.198.152.80:3001/api/uploads/${getTimestampWithoutSeconds()}-${imageName}`,
     });
   
     try {
       const postData = {
         title: articleTitle,
         content: articleContent,
-        images: `http://localhost:3001/uploads/${getTimestampWithoutSeconds()}-${imageName}`,
+        image_location: `http://143.198.152.80:3001/api/uploads/${getTimestampWithoutSeconds()}-${imageName}`,
       };
-  
-      // Dispatch addPost action
+
       const result = await dispatch(addPost(postData));
   
       // Handle file upload
       if (file) {
         const formData = new FormData();
         formData.append('image', file);
-  
-        const response = await dispatch(imageUpload(formData));
-        
-        // Add the uploaded image URL to the uploadedImages array
-        setUploadedImages(prevImages => [...prevImages, response.payload.location]);
+        await dispatch(imageUpload(formData));
+        handleClose();
       }
+
+
   
       console.log('addPostAction dispatched successfully', result);
       setSuccessMessage('Article posted successfully!');
+
       setArticleTitle('');
       setArticleContent('');
-      setUploadedImages([]);
     } catch (error) {
       console.error('Error posting article:', error);
       setErrorMessage('Failed to post article. Please try again.');
     }
     handleClose();
-    refreshPage();
+    // refreshPage();
   };
 
   return (
@@ -121,7 +117,6 @@ function FullScreenCreateModal({ show, handleClose, setErrorMessage, setSuccessM
               className="form-control mb-2"
               onChange={(e) => setFile(e.target.files[0])}
             />
-            <p>Selected images: {uploadedImages.length}</p>
           </div>
           <button type="submit" className="btn btn-dark">
             Submit
